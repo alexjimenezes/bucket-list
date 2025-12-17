@@ -94,6 +94,31 @@ export const items = {
     fetchApi<MessageResponse>(`/bucket-lists/${bucketListId}/items/${itemId}`, {
       method: 'DELETE',
     }),
+
+  // Image upload (uses FormData, not JSON)
+  uploadImage: async (bucketListId: string, itemId: string, file: File): Promise<ItemResponse> => {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const response = await fetch(`${API_BASE}/bucket-lists/${bucketListId}/items/${itemId}/image`, {
+      method: 'POST',
+      body: formData,
+      credentials: 'include',
+      // Don't set Content-Type header - browser will set it with boundary for FormData
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Upload failed' }));
+      throw new ApiError(response.status, error.error || 'Upload failed');
+    }
+
+    return response.json();
+  },
+
+  deleteImage: (bucketListId: string, itemId: string) =>
+    fetchApi<ItemResponse>(`/bucket-lists/${bucketListId}/items/${itemId}/image`, {
+      method: 'DELETE',
+    }),
 };
 
 // Invitations

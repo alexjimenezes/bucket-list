@@ -48,14 +48,16 @@ model BucketListMember {
 }
 
 model BucketListItem {
-  id            String    @id @default(uuid())
-  bucketListId  String
-  text          String
-  done          Boolean   @default(false)
-  completedAt   DateTime?
-  completedById String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id              String    @id @default(uuid())
+  bucketListId    String
+  text            String
+  done            Boolean   @default(false)
+  completedAt     DateTime?
+  completedById   String?
+  imageKey        String?   // R2 object key for memory image
+  imageUploadedAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   bucketList BucketList @relation(fields: [bucketListId], references: [id], onDelete: Cascade)
 }

@@ -4,6 +4,7 @@ import { prisma } from '../config/database';
 import { AuthRequest, authMiddleware } from '../middleware/auth';
 import { asyncHandler } from '../middleware/asyncHandler';
 import { AppError } from '../middleware/errorHandler';
+import { getSignedImageUrl, isR2Configured } from '../config/r2';
 
 const router = Router();
 
@@ -133,7 +134,28 @@ router.get(
       throw new AppError('Bucket list not found', 404);
     }
 
-    res.json({ bucketList });
+    // Generate signed URLs for items with images
+    const itemsWithUrls = await Promise.all(
+      bucketList.items.map(async (item) => {
+        if (item.imageKey && isR2Configured()) {
+          try {
+            const imageUrl = await getSignedImageUrl(item.imageKey);
+            return { ...item, imageUrl };
+          } catch (error) {
+            console.error('Failed to generate signed URL:', error);
+            return { ...item, imageUrl: null };
+          }
+        }
+        return { ...item, imageUrl: null };
+      })
+    );
+
+    res.json({
+      bucketList: {
+        ...bucketList,
+        items: itemsWithUrls,
+      },
+    });
   })
 );
 

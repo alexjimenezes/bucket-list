@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Layout } from '../components/Layout';
@@ -22,52 +22,72 @@ function ItemCard({
   item,
   onToggle,
   onDelete,
+  onImageClick,
   completedByName,
 }: {
   item: BucketListItem;
   onToggle: () => void;
   onDelete: () => void;
+  onImageClick?: (imageUrl: string) => void;
   completedByName?: string;
 }) {
   return (
     <div
-      className={`bg-white border border-gray-200 rounded-[--radius] p-4 flex items-center gap-4 transition-all hover:border-primary-300 group ${
+      className={`bg-white border border-gray-200 rounded-[--radius] p-4 transition-all hover:border-primary-300 group ${
         item.done ? 'bg-gray-50' : ''
       }`}
     >
-      <button
-        onClick={onToggle}
-        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${
-          item.done
-            ? 'bg-success-500 border-success-500 text-white'
-            : 'border-gray-300 hover:border-primary-500'
-        }`}
-      >
-        {item.done && <span className="text-sm">✓</span>}
-      </button>
-
-      <div className="flex-1 min-w-0">
-        <p
-          className={`font-medium ${
-            item.done ? 'line-through text-gray-400' : 'text-gray-900'
+      <div className="flex items-center gap-4">
+        <button
+          onClick={onToggle}
+          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${
+            item.done
+              ? 'bg-success-500 border-success-500 text-white'
+              : 'border-gray-300 hover:border-primary-500'
           }`}
         >
-          {item.text}
-        </p>
-        {item.done && item.completedAt && (
-          <p className="text-xs text-gray-400 mt-0.5">
-            Completed {formatDate(item.completedAt)}
-            {completedByName && ` by ${completedByName}`}
+          {item.done && <span className="text-sm">✓</span>}
+        </button>
+
+        <div className="flex-1 min-w-0">
+          <p
+            className={`font-medium ${
+              item.done ? 'line-through text-gray-400' : 'text-gray-900'
+            }`}
+          >
+            {item.text}
           </p>
-        )}
+          {item.done && item.completedAt && (
+            <p className="text-xs text-gray-400 mt-0.5">
+              Completed {formatDate(item.completedAt)}
+              {completedByName && ` by ${completedByName}`}
+            </p>
+          )}
+        </div>
+
+        <button
+          onClick={onDelete}
+          className="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-danger-500 hover:bg-danger-50 rounded-lg transition-all"
+        >
+          🗑️
+        </button>
       </div>
 
-      <button
-        onClick={onDelete}
-        className="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-danger-500 hover:bg-danger-50 rounded-lg transition-all"
-      >
-        🗑️
-      </button>
+      {/* Memory Image */}
+      {item.imageUrl && (
+        <div className="mt-3 ml-10">
+          <button
+            onClick={() => onImageClick?.(item.imageUrl!)}
+            className="block rounded-[--radius] overflow-hidden border border-gray-200 hover:border-primary-300 transition-all"
+          >
+            <img
+              src={item.imageUrl}
+              alt="Memory"
+              className="w-32 h-24 object-cover"
+            />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -75,30 +95,198 @@ function ItemCard({
 function CelebrationModal({
   isOpen,
   onClose,
+  itemId,
   itemText,
+  bucketListId,
+  onImageUploaded,
 }: {
   isOpen: boolean;
   onClose: () => void;
+  itemId: string;
   itemText: string;
+  bucketListId: string;
+  onImageUploaded: () => void;
 }) {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setError('Please select a JPEG, PNG, or WebP image');
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image must be less than 5MB');
+      return;
+    }
+
+    setError(null);
+    setSelectedFile(file);
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => setPreview(e.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) return;
+
+    setIsUploading(true);
+    setError(null);
+
+    try {
+      await items.uploadImage(bucketListId, itemId, selectedFile);
+      onImageUploaded();
+      handleClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleClose = () => {
+    setSelectedFile(null);
+    setPreview(null);
+    setError(null);
+    onClose();
+  };
+
+  const handleSkip = () => {
+    handleClose();
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal isOpen={isOpen} onClose={handleClose}>
       <ModalHeader>
         <div className="text-6xl mb-4">🎉</div>
         <ModalTitle>Congratulations!</ModalTitle>
         <ModalDescription>You've achieved another dream!</ModalDescription>
       </ModalHeader>
 
-      <div className="bg-gray-50 rounded-[--radius] p-4 text-center font-medium text-gray-700">
+      <div className="bg-gray-50 rounded-[--radius] p-4 text-center font-medium text-gray-700 mb-4">
         "{itemText}"
       </div>
 
+      {/* Image Upload Section */}
+      <div className="border-t border-gray-100 pt-4">
+        {!preview ? (
+          <div className="text-center">
+            <p className="text-sm text-gray-500 mb-3">
+              Want to capture this memory?
+            </p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              className="mx-auto"
+            >
+              📷 Add a memory photo
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="relative rounded-[--radius] overflow-hidden">
+              <img
+                src={preview}
+                alt="Preview"
+                className="w-full h-48 object-cover"
+              />
+              <button
+                onClick={() => {
+                  setSelectedFile(null);
+                  setPreview(null);
+                }}
+                className="absolute top-2 right-2 bg-black/50 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm hover:bg-black/70"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <p className="text-sm text-danger-500 text-center mt-2">{error}</p>
+        )}
+      </div>
+
       <ModalFooter>
-        <Button onClick={onClose} className="w-full">
-          Continue
-        </Button>
+        {preview ? (
+          <div className="flex gap-3 w-full">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleSkip}
+              className="flex-1"
+              disabled={isUploading}
+            >
+              Skip
+            </Button>
+            <Button
+              type="button"
+              onClick={handleUpload}
+              className="flex-1"
+              disabled={isUploading}
+            >
+              {isUploading ? 'Uploading...' : 'Save Memory'}
+            </Button>
+          </div>
+        ) : (
+          <Button onClick={handleSkip} className="w-full">
+            Continue
+          </Button>
+        )}
       </ModalFooter>
     </Modal>
+  );
+}
+
+function ImageLightbox({
+  isOpen,
+  imageUrl,
+  onClose,
+}: {
+  isOpen: boolean;
+  imageUrl: string | null;
+  onClose: () => void;
+}) {
+  if (!isOpen || !imageUrl) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 text-white/80 hover:text-white text-2xl"
+      >
+        ✕
+      </button>
+      <img
+        src={imageUrl}
+        alt="Memory"
+        className="max-w-full max-h-full object-contain rounded-lg"
+        onClick={(e) => e.stopPropagation()}
+      />
+    </div>
   );
 }
 
@@ -159,9 +347,10 @@ export function BucketListDetail() {
   const { user } = useAuth();
 
   const [newItemText, setNewItemText] = useState('');
-  const [celebrationItem, setCelebrationItem] = useState<string | null>(null);
+  const [celebrationItem, setCelebrationItem] = useState<{ id: string; text: string } | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['bucket-list', id],
@@ -186,7 +375,7 @@ export function BucketListDetail() {
       if (variables.done) {
         const item = bucketList?.items?.find((i) => i.id === variables.itemId);
         if (item) {
-          setCelebrationItem(item.text);
+          setCelebrationItem({ id: item.id, text: item.text });
         }
       }
     },
@@ -358,6 +547,7 @@ export function BucketListDetail() {
                   toggleItemMutation.mutate({ itemId: item.id, done: true })
                 }
                 onDelete={() => deleteItemMutation.mutate(item.id)}
+                onImageClick={setLightboxImage}
               />
             ))}
           </div>
@@ -380,6 +570,7 @@ export function BucketListDetail() {
                   toggleItemMutation.mutate({ itemId: item.id, done: false })
                 }
                 onDelete={() => deleteItemMutation.mutate(item.id)}
+                onImageClick={setLightboxImage}
               />
             ))}
           </div>
@@ -387,10 +578,24 @@ export function BucketListDetail() {
       )}
 
       {/* Celebration Modal */}
-      <CelebrationModal
-        isOpen={!!celebrationItem}
-        onClose={() => setCelebrationItem(null)}
-        itemText={celebrationItem || ''}
+      {celebrationItem && (
+        <CelebrationModal
+          isOpen={!!celebrationItem}
+          onClose={() => setCelebrationItem(null)}
+          itemId={celebrationItem.id}
+          itemText={celebrationItem.text}
+          bucketListId={id!}
+          onImageUploaded={() => {
+            queryClient.invalidateQueries({ queryKey: ['bucket-list', id] });
+          }}
+        />
+      )}
+
+      {/* Image Lightbox */}
+      <ImageLightbox
+        isOpen={!!lightboxImage}
+        imageUrl={lightboxImage}
+        onClose={() => setLightboxImage(null)}
       />
 
       {/* Invite Modal */}

@@ -25,6 +25,9 @@ export interface BucketListItem {
   done: boolean;
   completedAt: string | null;
   completedById: string | null;
+  imageKey?: string | null;
+  imageUrl?: string | null;
+  imageUploadedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
