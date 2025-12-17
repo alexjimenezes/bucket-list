@@ -6,6 +6,7 @@ interface AvatarProps {
   src?: string | null;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  style?: React.CSSProperties;
 }
 
 const gradients = [
@@ -21,7 +22,7 @@ function getGradient(name: string): string {
   return gradients[index];
 }
 
-function Avatar({ name, src, size = 'md', className }: AvatarProps) {
+function Avatar({ name, src, size = 'md', className, style }: AvatarProps) {
   const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
@@ -41,6 +42,7 @@ function Avatar({ name, src, size = 'md', className }: AvatarProps) {
         alt={name}
         onError={() => setImgError(true)}
         className={cn('rounded-full object-cover', sizeClasses[size], className)}
+        style={style}
       />
     );
   }
@@ -53,6 +55,7 @@ function Avatar({ name, src, size = 'md', className }: AvatarProps) {
         sizeClasses[size],
         className
       )}
+      style={style}
     >
       {getInitials(name)}
     </div>
