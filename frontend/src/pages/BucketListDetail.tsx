@@ -74,7 +74,7 @@ function ItemCard({
                 className="p-2 text-gray-500 bg-gray-100 hover:bg-primary-100 hover:text-primary-600 border border-gray-200 rounded-lg transition-all"
                 title="View memory"
               >
-                🖼️
+                ✨
               </button>
             ) : (
               <button
