@@ -4,14 +4,24 @@ import { cn } from '../../lib/utils';
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
   hover?: boolean;
+  variant?: 'default' | 'soft' | 'gradient-border';
 }
 
-function Card({ className, children, hover = false, ...props }: CardProps) {
+function Card({ className, children, hover = false, variant = 'default', ...props }: CardProps) {
   return (
     <div
       className={cn(
-        'bg-white border border-gray-200 rounded-[--radius] p-5',
-        hover && 'cursor-pointer transition-all hover:border-primary-400 hover:shadow-md hover:-translate-y-0.5',
+        'bg-white border border-gray-100 rounded-[--radius-lg] p-5',
+        'shadow-soft-sm transition-all duration-300',
+        {
+          'bg-gradient-pastel-purple border-purple-100': variant === 'soft',
+        },
+        hover && [
+          'cursor-pointer',
+          'hover:shadow-soft-lg',
+          'hover:-translate-y-1',
+          'hover:border-primary-200',
+        ],
         className
       )}
       {...props}
@@ -39,7 +49,7 @@ function CardTitle({ className, children, ...props }: HTMLAttributes<HTMLHeading
 
 function CardDescription({ className, children, ...props }: HTMLAttributes<HTMLParagraphElement>) {
   return (
-    <p className={cn('text-sm text-gray-500', className)} {...props}>
+    <p className={cn('text-sm text-gray-500 mt-0.5', className)} {...props}>
       {children}
     </p>
   );

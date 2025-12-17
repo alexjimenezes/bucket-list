@@ -6,9 +6,10 @@ interface ModalProps {
   onClose: () => void;
   children: ReactNode;
   className?: string;
+  variant?: 'default' | 'celebration';
 }
 
-function Modal({ isOpen, onClose, children, className }: ModalProps) {
+function Modal({ isOpen, onClose, children, className, variant = 'default' }: ModalProps) {
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -29,13 +30,17 @@ function Modal({ isOpen, onClose, children, className }: ModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop with blur */}
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
+      {/* Modal content */}
       <div
         className={cn(
-          'relative bg-white rounded-[--radius-xl] p-8 max-w-md w-full animate-modal-in shadow-xl',
+          'relative bg-white rounded-[--radius-2xl] p-8 max-w-md w-full',
+          'animate-bounce-in shadow-soft-xl',
+          variant === 'celebration' && 'bg-gradient-celebration',
           className
         )}
       >
