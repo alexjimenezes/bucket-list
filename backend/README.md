@@ -14,6 +14,7 @@ Express.js REST API server for the Bucket List application.
 - [Project Structure](#project-structure)
 - [Deployment](#deployment)
 - [Troubleshooting](#troubleshooting)
+- [Known Limitations & Future Improvements](#known-limitations--future-improvements)
 
 ## Requirements
 
@@ -174,6 +175,8 @@ npm run start    # Run compiled JavaScript
 ```
 
 ## Testing
+
+> **Warning:** Tests currently run against your main database (`DATABASE_URL`). Test data is cleaned up automatically, but see [Known Limitations](#known-limitations--future-improvements) for recommended improvements.
 
 ### Run All Tests
 
@@ -439,3 +442,49 @@ npm run db:studio
 | `npm run db:generate` | Generate Prisma client |
 | `npm run db:push` | Push schema to database |
 | `npm run db:studio` | Open Prisma Studio |
+
+## Known Limitations & Future Improvements
+
+### Test Database Isolation (High Priority)
+
+**Current Behavior:**
+Tests run against the production/development database specified in `DATABASE_URL`. While test data is automatically cleaned up (users with `@test.com` emails, bucket lists starting with `Test `), this approach has risks:
+
+- If tests crash or timeout, test data may remain in the database
+- Potential for accidental interference with real data
+- Network latency to remote database slows test execution
+
+**Recommended Improvement:**
+Set up a separate test database using one of these approaches:
+
+1. **Separate Neon Database**
+   ```bash
+   # Create .env.test
+   DATABASE_URL="postgresql://...separate-test-db..."
+   ```
+   Update Jest config to load `.env.test`:
+   ```js
+   // jest.config.js
+   setupFiles: ['dotenv/config'],
+   ```
+
+2. **Local PostgreSQL for Tests**
+   ```bash
+   # .env.test
+   DATABASE_URL="postgresql://localhost:5432/bucketlist_test"
+   ```
+
+3. **Neon Database Branching**
+   Use Neon's branching feature to create an isolated `test` branch that can be reset between test runs.
+
+4. **In-Memory Database**
+   Use SQLite with Prisma for faster, isolated tests (requires schema compatibility adjustments).
+
+### Other Future Improvements
+
+- **Rate Limiting** - Add rate limiting to prevent API abuse
+- **Request Logging** - Structured logging with Winston/Pino for production
+- **Error Tracking** - Integration with Sentry or similar service
+- **API Documentation** - Auto-generated OpenAPI/Swagger docs
+- **Input Sanitization** - Additional XSS/injection protection
+- **Refresh Tokens** - Implement refresh token rotation for better security
