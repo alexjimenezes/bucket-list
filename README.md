@@ -19,11 +19,12 @@ A collaborative bucket list application where users can create, share, and track
 - **ORM**: Prisma
 - **Authentication**: Passport.js + JWT
 
-### Frontend (Coming Soon)
-- **Framework**: React with TypeScript
+### Frontend
+- **Framework**: React 19 with TypeScript
 - **Build Tool**: Vite
-- **Styling**: Tailwind CSS
-- **Components**: shadcn/ui
+- **Styling**: Tailwind CSS v4
+- **State Management**: TanStack Query
+- **Routing**: React Router
 
 ## Project Structure
 
@@ -36,7 +37,13 @@ bucket-list/
 │   │   ├── routes/       # API route handlers
 │   │   └── __tests__/    # Jest test suites
 │   └── prisma/           # Database schema
-├── frontend/         # React application (coming soon)
+├── frontend/         # React application
+│   └── src/
+│       ├── components/   # Reusable UI components
+│       ├── hooks/        # Custom React hooks
+│       ├── lib/          # API client and utilities
+│       ├── pages/        # Route components
+│       └── types/        # TypeScript definitions
 └── README.md         # This file
 ```
 
@@ -66,17 +73,19 @@ bucket-list/
    npm run dev
    ```
 
-3. **Set up the frontend** (coming soon)
+3. **Set up the frontend**
    ```bash
    cd frontend
    npm install
    npm run dev
    ```
 
+   The frontend runs at http://localhost:5173 and proxies API requests to the backend.
+
 ## Documentation
 
 - [Backend Setup & API Documentation](./backend/README.md)
-- Frontend Documentation (coming soon)
+- [Frontend Documentation](./frontend/README.md)
 
 ## API Overview
 
