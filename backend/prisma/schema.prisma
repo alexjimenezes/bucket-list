@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  googleId  String   @unique
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships         BucketListMember[]
+  sentInvitations     Invitation[]       @relation("InvitedBy")
+  receivedInvitations Invitation[]       @relation("InvitedUser")
+}
+
+model BucketList {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  type        String   @default("individual") // "individual" | "group"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members     BucketListMember[]
+  items       BucketListItem[]
+  invitations Invitation[]
+}
+
+model BucketListMember {
+  id           String   @id @default(uuid())
+  userId       String
+  bucketListId String
+  role         String   @default("member") // "owner" | "member"
+  joinedAt     DateTime @default(now())
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bucketList BucketList @relation(fields: [bucketListId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, bucketListId])
+}
+
+model BucketListItem {
+  id            String    @id @default(uuid())
+  bucketListId  String
+  text          String
+  done          Boolean   @default(false)
+  completedAt   DateTime?
+  completedById String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  bucketList BucketList @relation(fields: [bucketListId], references: [id], onDelete: Cascade)
+}
+
+model Invitation {
+  id            String   @id @default(uuid())
+  bucketListId  String
+  invitedById   String
+  email         String
+  invitedUserId String?
+  status        String   @default("pending") // "pending" | "accepted" | "declined"
+  createdAt     DateTime @default(now())
+
+  bucketList  BucketList @relation(fields: [bucketListId], references: [id], onDelete: Cascade)
+  invitedBy   User       @relation("InvitedBy", fields: [invitedById], references: [id])
+  invitedUser User?      @relation("InvitedUser", fields: [invitedUserId], references: [id])
+
+  @@unique([bucketListId, email])
+}
