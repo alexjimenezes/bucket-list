@@ -484,6 +484,22 @@ export function BucketListDetail() {
   const bucketList = data.bucketList;
   const todoItems = bucketList.items?.filter((item) => !item.done) || [];
   const doneItems = bucketList.items?.filter((item) => item.done) || [];
+
+  // Group done items by month, sorted most recent first
+  const doneItemsByMonth = doneItems
+    .sort((a, b) => {
+      const dateA = a.completedAt ? new Date(a.completedAt).getTime() : 0;
+      const dateB = b.completedAt ? new Date(b.completedAt).getTime() : 0;
+      return dateB - dateA;
+    })
+    .reduce<Record<string, typeof doneItems>>((acc, item) => {
+      const date = item.completedAt ? new Date(item.completedAt) : new Date();
+      const monthKey = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      if (!acc[monthKey]) acc[monthKey] = [];
+      acc[monthKey].push(item);
+      return acc;
+    }, {});
+
   const isOwner = bucketList.members.some(
     (m) => m.userId === user?.id && m.role === 'owner'
   );
@@ -619,20 +635,27 @@ export function BucketListDetail() {
           <h2 className="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2">
             ✅ Completed ({doneItems.length})
           </h2>
-          <div className="space-y-2">
-            {doneItems.map((item) => (
-              <ItemCard
-                key={item.id}
-                item={item}
-                onToggle={() =>
-                  toggleItemMutation.mutate({ itemId: item.id, done: false })
-                }
-                onDelete={() => deleteItemMutation.mutate(item.id)}
-                onImageClick={setLightboxImage}
-                onAddPhoto={() => setCelebrationItem({ id: item.id, text: item.text })}
-              />
-            ))}
-          </div>
+          {Object.entries(doneItemsByMonth).map(([month, monthItems]) => (
+            <div key={month} className="mb-6">
+              <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">
+                {month}
+              </h3>
+              <div className="space-y-2">
+                {monthItems.map((item) => (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    onToggle={() =>
+                      toggleItemMutation.mutate({ itemId: item.id, done: false })
+                    }
+                    onDelete={() => deleteItemMutation.mutate(item.id)}
+                    onImageClick={setLightboxImage}
+                    onAddPhoto={() => setCelebrationItem({ id: item.id, text: item.text })}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
