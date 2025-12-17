@@ -102,6 +102,25 @@ bucket-list/
 | `/invitations/:id/accept` | POST | Accept invitation |
 | `/invitations/:id/decline` | POST | Decline invitation |
 
+## Deployment
+
+This app is designed to be deployed with:
+- **Backend**: [Render](https://render.com) (free tier)
+- **Frontend**: [Vercel](https://vercel.com) (free tier)
+- **Database**: [Neon](https://neon.tech) (free tier PostgreSQL)
+
+See individual READMEs for detailed deployment instructions:
+- [Backend Deployment](./backend/README.md#deployment)
+- [Frontend Deployment](./frontend/README.md#deployment)
+
+### Quick Deployment Checklist
+
+1. Push code to GitHub
+2. Deploy backend on Render with environment variables
+3. Update Google OAuth redirect URI to use HTTPS backend URL
+4. Deploy frontend on Vercel with `VITE_API_URL` pointing to backend
+5. Configure custom domain (optional)
+
 ## License
 
 MIT

@@ -83,19 +83,114 @@ The app uses a custom theme defined in `src/index.css`:
 - **Accent color**: Amber palette (#f59e0b)
 - **Font**: Plus Jakarta Sans
 
-## Production Deployment
+## Deployment
 
-Build the app:
-```bash
-npm run build
+### Vercel Deployment (Recommended)
+
+#### Step 1: Create Project
+
+1. Go to [vercel.com](https://vercel.com) and sign up/login with GitHub
+2. Click **Add New** → **Project**
+3. Import your `bucket-list` repository
+4. Configure the project:
+
+| Setting | Value |
+|---------|-------|
+| **Root Directory** | `frontend` |
+| **Framework Preset** | Vite |
+| **Build Command** | `npm run build` |
+| **Output Directory** | `dist` |
+
+#### Step 2: Configure Environment Variables
+
+Add this environment variable:
+
+| Variable | Value |
+|----------|-------|
+| `VITE_API_URL` | `https://your-backend.onrender.com` |
+
+> **Important:** Use the full backend URL with `https://`
+
+#### Step 3: Deploy
+
+Click **Deploy**. Vercel will:
+1. Clone your repo
+2. Install dependencies
+3. Build the app
+4. Deploy to CDN
+
+First deploy takes 1-2 minutes.
+
+### Custom Domain Setup
+
+#### Step 1: Add Domain in Vercel
+
+1. Go to your project in Vercel
+2. Click **Settings** → **Domains**
+3. Add your domain (e.g., `bucketlist.yourdomain.com`)
+4. Vercel will show DNS configuration instructions
+
+#### Step 2: Configure DNS
+
+In your domain registrar (e.g., IONOS, Cloudflare, GoDaddy):
+
+**For subdomain (recommended):**
+| Type | Name | Value | TTL |
+|------|------|-------|-----|
+| CNAME | `bucketlist` | `cname.vercel-dns.com` | 3600 |
+
+**For apex domain:**
+| Type | Name | Value | TTL |
+|------|------|-------|-----|
+| A | `@` | `76.76.21.21` | 3600 |
+
+#### Step 3: Update Backend CORS
+
+After setting up your custom domain, update the backend's `FRONTEND_URL` environment variable in Render:
+
+```
+FRONTEND_URL=https://bucketlist.yourdomain.com
 ```
 
-The `dist/` folder contains the static files to deploy. Options include:
+### Environment Variables Reference
 
-- **Vercel**: Connect your repo, it auto-detects Vite
-- **Netlify**: Set build command to `npm run build` and publish directory to `dist`
-- **Any static host**: Upload the `dist/` folder
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VITE_API_URL` | Yes (prod) | Backend API URL. Not needed in dev (uses proxy) |
 
-### Environment Variables
+### SPA Routing
 
-For production, ensure your backend URL is correctly configured in the proxy or API client.
+The `vercel.json` file configures rewrites for client-side routing:
+
+```json
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ]
+}
+```
+
+This ensures all routes (like `/list/123`) serve `index.html` and let React Router handle them.
+
+### Alternative Platforms
+
+**Netlify:**
+1. Connect GitHub repo
+2. Set **Base directory** to `frontend`
+3. Set **Build command** to `npm run build`
+4. Set **Publish directory** to `frontend/dist`
+5. Add `_redirects` file: `/* /index.html 200`
+
+**Any Static Host:**
+```bash
+npm run build
+# Upload contents of dist/ folder
+```
+
+### Local Production Preview
+
+```bash
+npm run build
+npm run preview
+# Opens at http://localhost:4173
+```

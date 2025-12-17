@@ -352,39 +352,95 @@ backend/
 
 ## Deployment
 
-### Environment Setup
+### Render Deployment (Recommended)
 
-1. Set `NODE_ENV=production`
-2. Use secure `JWT_SECRET`
-3. Configure `FRONTEND_URL` for CORS
-4. Update Google OAuth redirect URIs
+#### Step 1: Create Web Service
 
-### Recommended Platforms
+1. Go to [render.com](https://render.com) and sign up/login with GitHub
+2. Click **New +** → **Web Service**
+3. Connect your GitHub repository
+4. Configure the service:
 
-**Backend Hosting:**
-- [Render](https://render.com) - Free tier available
-- [Railway](https://railway.app) - Easy deploys
-- [Fly.io](https://fly.io) - Global edge deployment
+| Setting | Value |
+|---------|-------|
+| **Name** | `bucket-list-api` |
+| **Root Directory** | `backend` |
+| **Runtime** | Node |
+| **Build Command** | `npm install && npm run build` |
+| **Start Command** | `npm start` |
+| **Instance Type** | Free |
 
-**Database:**
-- [Neon](https://neon.tech) - Serverless Postgres, free tier
-- [Supabase](https://supabase.com) - Postgres with extras
-- [Railway](https://railway.app) - Managed Postgres
+#### Step 2: Configure Environment Variables
 
-### Render Deployment Example
+Add these environment variables in Render dashboard:
 
-1. Connect GitHub repository
-2. Set build command: `npm install && npm run build`
-3. Set start command: `npm run start`
-4. Add environment variables
-5. Deploy
+| Variable | Value | Notes |
+|----------|-------|-------|
+| `NODE_ENV` | `production` | Required |
+| `PORT` | `3001` | Render also sets this automatically |
+| `DATABASE_URL` | `postgresql://...` | Your Neon connection string |
+| `JWT_SECRET` | `<random-32-char-string>` | Generate with `openssl rand -base64 32` |
+| `GOOGLE_CLIENT_ID` | `xxx.apps.googleusercontent.com` | From Google Cloud Console |
+| `GOOGLE_CLIENT_SECRET` | `GOCSPX-xxx` | From Google Cloud Console |
+| `FRONTEND_URL` | `https://your-frontend.vercel.app` | Your frontend URL (with https) |
+| `BACKEND_URL` | `https://your-app.onrender.com` | Your Render URL (with https) |
+
+> **Important:** Both `FRONTEND_URL` and `BACKEND_URL` must use `https://`
+
+#### Step 3: Update Google OAuth
+
+In [Google Cloud Console](https://console.cloud.google.com):
+
+1. Go to **APIs & Services** → **Credentials**
+2. Edit your OAuth 2.0 Client
+3. Add to **Authorized redirect URIs**:
+   ```
+   https://your-app.onrender.com/auth/google/callback
+   ```
+   > **Must be HTTPS** - Google requires HTTPS for production OAuth
+
+#### Step 4: Deploy
+
+Click **Create Web Service**. Render will:
+1. Clone your repo
+2. Run build command
+3. Start the server
+
+First deploy takes 2-5 minutes. Subsequent deploys are faster.
+
+### Cross-Domain Cookie Configuration
+
+This app uses HTTP-only cookies for authentication. Since the backend and frontend are on different domains, cookies are configured with:
+
+```javascript
+{
+  httpOnly: true,
+  secure: true,        // HTTPS only
+  sameSite: 'none',    // Allow cross-domain
+}
+```
+
+This requires:
+- Both frontend and backend must use HTTPS
+- `credentials: 'include'` in frontend fetch requests (already configured)
 
 ### Health Check
 
 ```bash
-curl https://your-api.com/health
+curl https://your-app.onrender.com/health
 # {"status":"ok","timestamp":"..."}
 ```
+
+### Alternative Platforms
+
+**Backend Hosting:**
+- [Railway](https://railway.app) - Easy deploys, limited free tier
+- [Fly.io](https://fly.io) - Global edge deployment
+
+**Database:**
+- [Neon](https://neon.tech) - Serverless Postgres, free tier (recommended)
+- [Supabase](https://supabase.com) - Postgres with extras
+- [Railway](https://railway.app) - Managed Postgres
 
 ## Troubleshooting
 
