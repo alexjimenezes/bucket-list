@@ -23,21 +23,21 @@ function ItemCard({
   onToggle,
   onDelete,
   onImageClick,
-  completedByName,
+  onAddPhoto,
 }: {
   item: BucketListItem;
   onToggle: () => void;
   onDelete: () => void;
   onImageClick?: (imageUrl: string) => void;
-  completedByName?: string;
+  onAddPhoto?: () => void;
 }) {
   return (
     <div
-      className={`bg-white border border-gray-200 rounded-[--radius] p-4 transition-all hover:border-primary-300 group ${
+      className={`bg-white border border-gray-200 rounded-[--radius] p-4 transition-all hover:border-primary-300 ${
         item.done ? 'bg-gray-50' : ''
       }`}
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <button
           onClick={onToggle}
           className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${
@@ -60,34 +60,43 @@ function ItemCard({
           {item.done && item.completedAt && (
             <p className="text-xs text-gray-400 mt-0.5">
               Completed {formatDate(item.completedAt)}
-              {completedByName && ` by ${completedByName}`}
             </p>
           )}
         </div>
 
-        <button
-          onClick={onDelete}
-          className="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-danger-500 hover:bg-danger-50 rounded-lg transition-all"
-        >
-          🗑️
-        </button>
-      </div>
+        {/* Action buttons */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Photo button for completed items */}
+          {item.done && (
+            item.imageUrl ? (
+              <button
+                onClick={() => onImageClick?.(item.imageUrl!)}
+                className="p-2 text-gray-500 bg-gray-100 hover:bg-primary-100 hover:text-primary-600 border border-gray-200 rounded-lg transition-all"
+                title="View memory"
+              >
+                🖼️
+              </button>
+            ) : (
+              <button
+                onClick={onAddPhoto}
+                className="p-2 text-gray-500 bg-gray-100 hover:bg-primary-100 hover:text-primary-600 border border-gray-200 rounded-lg transition-all"
+                title="Add memory photo"
+              >
+                📷
+              </button>
+            )
+          )}
 
-      {/* Memory Image */}
-      {item.imageUrl && (
-        <div className="mt-3 ml-10">
+          {/* Delete button */}
           <button
-            onClick={() => onImageClick?.(item.imageUrl!)}
-            className="block rounded-[--radius] overflow-hidden border border-gray-200 hover:border-primary-300 transition-all"
+            onClick={onDelete}
+            className="p-2 text-gray-400 bg-gray-100 hover:text-danger-500 hover:bg-danger-50 border border-gray-200 rounded-lg transition-all"
+            title="Delete item"
           >
-            <img
-              src={item.imageUrl}
-              alt="Memory"
-              className="w-32 h-24 object-cover"
-            />
+            🗑️
           </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -290,6 +299,48 @@ function ImageLightbox({
   );
 }
 
+function MemoriesCarousel({
+  items,
+  onImageClick,
+}: {
+  items: BucketListItem[];
+  onImageClick: (imageUrl: string) => void;
+}) {
+  const memoriesWithImages = items.filter((item) => item.imageUrl);
+
+  if (memoriesWithImages.length === 0) return null;
+
+  return (
+    <div className="mb-8">
+      <h2 className="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2">
+        📸 Memories ({memoriesWithImages.length})
+      </h2>
+      <div className="overflow-x-auto pb-2 -mx-4 px-4">
+        <div className="flex gap-3" style={{ width: 'max-content' }}>
+          {memoriesWithImages.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => onImageClick(item.imageUrl!)}
+              className="flex-shrink-0 rounded-[--radius] overflow-hidden border-2 border-transparent hover:border-primary-400 transition-all group relative"
+            >
+              <img
+                src={item.imageUrl!}
+                alt={item.text}
+                className="w-32 h-24 object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
+                <span className="text-white text-xs font-medium truncate w-full">
+                  {item.text}
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function InviteModal({
   isOpen,
   onClose,
@@ -437,12 +488,6 @@ export function BucketListDetail() {
     (m) => m.userId === user?.id && m.role === 'owner'
   );
 
-  const getMemberName = (userId: string | null) => {
-    if (!userId) return undefined;
-    const member = bucketList.members.find((m) => m.userId === userId);
-    return member?.user.name;
-  };
-
   const handleAddItem = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newItemText.trim()) return;
@@ -470,8 +515,16 @@ export function BucketListDetail() {
               </span>
               {bucketList.members.length > 1 && (
                 <span className="flex items-center gap-1">
-                  👥 Shared with {bucketList.members.length - 1} other
-                  {bucketList.members.length > 2 ? 's' : ''}
+                  👥 Shared with{' '}
+                  {(() => {
+                    const others = bucketList.members.filter((m) => m.userId !== user?.id);
+                    const names = others.slice(0, 2).map((m) => m.user.name.split(' ')[0]);
+                    const remaining = others.length - 2;
+                    if (remaining <= 0) {
+                      return names.join(' and ');
+                    }
+                    return `${names.join(', ')} and ${remaining} other${remaining > 1 ? 's' : ''}`;
+                  })()}
                 </span>
               )}
             </div>
@@ -528,6 +581,12 @@ export function BucketListDetail() {
         </Button>
       </form>
 
+      {/* Memories Carousel */}
+      <MemoriesCarousel
+        items={bucketList.items || []}
+        onImageClick={setLightboxImage}
+      />
+
       {/* Todo Items */}
       <div className="mb-8">
         <h2 className="text-sm font-semibold text-gray-600 mb-3 flex items-center gap-2">
@@ -565,12 +624,12 @@ export function BucketListDetail() {
               <ItemCard
                 key={item.id}
                 item={item}
-                completedByName={getMemberName(item.completedById)}
                 onToggle={() =>
                   toggleItemMutation.mutate({ itemId: item.id, done: false })
                 }
                 onDelete={() => deleteItemMutation.mutate(item.id)}
                 onImageClick={setLightboxImage}
+                onAddPhoto={() => setCelebrationItem({ id: item.id, text: item.text })}
               />
             ))}
           </div>
