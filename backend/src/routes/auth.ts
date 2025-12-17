@@ -26,10 +26,11 @@ router.get(
     const token = generateToken(user.id);
 
     // Set HTTP-only cookie
+    // Use sameSite: 'none' for cross-domain auth (backend and frontend on different domains)
     res.cookie('token', token, {
       httpOnly: true,
-      secure: env.nodeEnv === 'production',
-      sameSite: env.nodeEnv === 'production' ? 'strict' : 'lax',
+      secure: true,
+      sameSite: 'none',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
@@ -42,8 +43,8 @@ router.get(
 router.post('/logout', (_req: Request, res: Response) => {
   res.clearCookie('token', {
     httpOnly: true,
-    secure: env.nodeEnv === 'production',
-    sameSite: env.nodeEnv === 'production' ? 'strict' : 'lax',
+    secure: true,
+    sameSite: 'none',
   });
   res.json({ message: 'Logged out successfully' });
 });
