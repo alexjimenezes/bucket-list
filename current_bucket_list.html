@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bucketlist pareja</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  max-width: 600px; 
+  margin: 20px auto; 
+  padding: 0 14px; 
+  background:#f7f7f7; 
+  color:#1b1b1b;
+}
+h1 { font-size: 1.6rem; text-align:center; margin-bottom:26px; font-weight:600;}
+#roomArea { margin-bottom:20px; text-align:center; }
+input{
+  padding:10px; 
+  border-radius:8px; 
+  border:1px solid #d0d0d0;
+  width: 68%;
+  background:white;
+}
+button{
+  padding:10px 14px; 
+  border:none; 
+  border-radius:8px; 
+  background:#4A6CCC; 
+  color:white; 
+  cursor:pointer; 
+  font-weight:500;
+}
+button:hover{opacity:0.9}
+ul { list-style:none; padding:0; margin:0; }
+li {
+  margin: 8px 0; 
+  padding:12px 14px; 
+  border-radius:8px; 
+  background:white; 
+  border:1px solid #d3d3d3;
+  font-size:0.97rem;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  transition:0.12s ease all;
+}
+li:hover{
+  background:#eef2ff;
+  border-color:#4A6CCC;
+}
+.textArea{ flex:1; cursor:pointer; }
+.done { text-decoration: line-through; opacity:0.45; }
+.date { font-size:0.75rem; opacity:0.6; margin-top:4px; }
+.sectionTitle{
+  margin-top:30px;
+  font-weight:600;
+  font-size:1.1rem;
+  margin-bottom:10px;
+  opacity:0.7;
+}
+.monthTitle{
+  margin-top:18px;
+  font-size:0.9rem;
+  font-weight:500;
+  opacity:0.6;
+}
+.deleteIcon{
+  margin-left:14px;
+  cursor:pointer;
+  opacity:0.6;
+}
+.deleteIcon:hover{ opacity:1; }
+.backbtn{
+  font-size:28px;
+  cursor:pointer;
+  color:#4A6CCC;
+  position:absolute;
+  left:18px;
+  top:20px;
+}
+</style>
+</head>
+<body>
+
+<div id="backArea" style="display:none;">
+  <span class="backbtn" onclick="window.goBack()">‹</span>
+</div>
+
+<h1>Bucketlist</h1>
+
+<div id="roomArea">
+  <input id="roomInput" placeholder="nombre lista ej: mariaDiego" />
+  <button onclick="window.setRoom()">Entrar</button>
+</div>
+
+<div id="app" style="display:none;">
+  <div style="display:flex; gap:6px; margin-bottom:20px;">
+    <input id="itemInput" placeholder="añadir plan" style="width:100%;" />
+    <button onclick="window.add()">+</button>
+  </div>
+
+  <div class="sectionTitle">📌 To do</div>
+  <ul id="list_pending"></ul>
+
+  <div class="sectionTitle">🎉 Done</div>
+  <div id="done_grouped"></div>
+</div>
+
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const SUPABASE_URL = "https://tkwkmzodvyiargthdepa.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrd2ttem9kdnlpYXJndGhkZXBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxODY5NDYsImV4cCI6MjA3Nzc2Mjk0Nn0.8WWquhsrbCwy4yrkBoD0M-BjZY7U9XQDh7EB9XH3gYM";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let room = localStorage.getItem("bucket_room") || null;
+
+document.addEventListener("keyup", e => {
+  if(e.key==="Enter" && document.activeElement===itemInput) window.add();
+  if(e.key==="Enter" && document.activeElement===roomInput) window.setRoom();
+});
+
+window.setRoom = function(){
+  const r = roomInput.value.trim();
+  if(!r) return;
+  room = r;
+  localStorage.setItem("bucket_room", room);
+  init();
+}
+
+window.goBack = function(){
+  localStorage.removeItem("bucket_room");
+  location.reload();
+}
+
+async function init(){
+  roomArea.style.display="none";
+  app.style.display="block";
+  backArea.style.display="block";
+  render();
+}
+
+function monthLabel(dateStr){
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
+}
+
+async function render(){
+  const { data } = await supabase.from("items")
+    .select("*")
+    .eq("room", room)
+    .order("completed_at",{ascending:true});
+
+  list_pending.innerHTML="";
+  done_grouped.innerHTML="";
+  const doneByMonth = {};
+
+  data.forEach(x=>{
+    if(!x.done){
+      const li=document.createElement("li");
+      const txt=document.createElement("div");
+      txt.textContent=x.text;
+      txt.className="textArea";
+      txt.onclick=()=>toggle(x);
+
+      const del=document.createElement("div");
+      del.textContent="🗑";
+      del.className="deleteIcon";
+      del.onclick=e=>{e.stopPropagation(); delItem(x)};
+
+      li.appendChild(txt); li.appendChild(del);
+      list_pending.appendChild(li);
+    } else {
+      const key = monthLabel(x.completed_at);
+      if(!doneByMonth[key]) doneByMonth[key]=[];
+      doneByMonth[key].push(x);
+    }
+  });
+
+  Object.keys(doneByMonth).forEach(month=>{
+    const title=document.createElement("div");
+    title.className="monthTitle";
+    title.textContent=month;
+    done_grouped.appendChild(title);
+
+    const ul=document.createElement("ul");
+    doneByMonth[month].forEach(x=>{
+      const li=document.createElement("li");
+      const txt=document.createElement("div");
+      txt.className="textArea";
+      txt.innerHTML = `<div class='done'>${x.text}</div><div class='date'>${new Date(x.completed_at).toLocaleDateString("es-ES")}</div>`;
+      txt.onclick=()=>toggle(x);
+
+      const del=document.createElement("div");
+      del.textContent="🗑";
+      del.className="deleteIcon";
+      del.onclick=e=>{e.stopPropagation(); delItem(x)};
+
+      li.appendChild(txt); li.appendChild(del);
+      ul.appendChild(li);
+    });
+    done_grouped.appendChild(ul);
+  });
+}
+
+window.add = async function(){
+  if(!itemInput.value.trim()) return;
+  await supabase.from("items").insert({room,text:itemInput.value.trim(),done:false});
+  itemInput.value="";
+  render();
+}
+
+async function toggle(x){
+  if(!x.done){
+    await supabase.from("items").update({done:true, completed_at:new Date().toISOString()}).eq("id",x.id);
+  } else {
+    await supabase.from("items").update({done:false, completed_at:null}).eq("id",x.id);
+  }
+  render();
+}
+
+async function delItem(x){
+  await supabase.from("items").delete().eq("id",x.id);
+  render();
+}
+
+if(room) init();
+</script>
+</body>
+</html>

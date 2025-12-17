@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bucket List - Design Mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      /* Warm, inspiring color palette */
+      --primary: #6366f1;       /* Indigo - main actions */
+      --primary-light: #818cf8;
+      --primary-dark: #4f46e5;
+      --accent: #f59e0b;        /* Amber - celebrations/highlights */
+      --accent-light: #fbbf24;
+      --success: #10b981;       /* Emerald - completed items */
+      --danger: #ef4444;
+
+      /* Neutrals */
+      --bg: #fafafa;
+      --bg-card: #ffffff;
+      --bg-hover: #f5f5f5;
+      --text: #1f2937;
+      --text-secondary: #6b7280;
+      --text-muted: #9ca3af;
+      --border: #e5e7eb;
+      --border-light: #f3f4f6;
+
+      /* Shadows */
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+      --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    /* ========== LOGIN PAGE ========== */
+    .login-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+    }
+
+    .login-card {
+      background: white;
+      border-radius: 24px;
+      padding: 48px 40px;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .login-logo {
+      font-size: 48px;
+      margin-bottom: 8px;
+    }
+
+    .login-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .login-subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+      font-size: 15px;
+    }
+
+    .google-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 28px;
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .google-btn:hover {
+      background: var(--bg-hover);
+      border-color: var(--text-muted);
+    }
+
+    .google-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* ========== DASHBOARD ========== */
+    .app-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0;
+      margin-bottom: 24px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-logo {
+      font-size: 28px;
+    }
+
+    .header-title {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .notification-badge {
+      position: relative;
+      background: none;
+      border: none;
+      font-size: 22px;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      transition: background 0.2s;
+    }
+
+    .notification-badge:hover {
+      background: var(--bg-hover);
+    }
+
+    .notification-dot {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 10px;
+      height: 10px;
+      background: var(--danger);
+      border-radius: 50%;
+      border: 2px solid var(--bg);
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    /* Section */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+    }
+
+    /* Bucket List Cards */
+    .bucket-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .bucket-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 20px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .bucket-card:hover {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .bucket-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .bucket-card-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .bucket-card-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .bucket-card-type {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: var(--border-light);
+      color: var(--text-secondary);
+    }
+
+    .bucket-card-type.group {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .bucket-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .bucket-progress {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .progress-bar {
+      flex: 1;
+      height: 6px;
+      background: var(--border-light);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--success), #34d399);
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+
+    .progress-text {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .bucket-members {
+      display: flex;
+      margin-left: 16px;
+    }
+
+    .bucket-members .avatar {
+      width: 28px;
+      height: 28px;
+      font-size: 11px;
+      margin-left: -8px;
+      border: 2px solid white;
+    }
+
+    .bucket-members .avatar:first-child {
+      margin-left: 0;
+    }
+
+    /* Create Button */
+    .create-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .create-btn:hover {
+      background: var(--primary-dark);
+    }
+
+    /* ========== BUCKET LIST DETAIL ========== */
+    .detail-header {
+      margin-bottom: 24px;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      text-decoration: none;
+      margin-bottom: 16px;
+      padding: 6px 0;
+    }
+
+    .back-btn:hover {
+      color: var(--primary);
+    }
+
+    .detail-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .detail-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .detail-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Add Item Input */
+    .add-item-form {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .add-item-input {
+      flex: 1;
+      padding: 14px 18px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 15px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    .add-item-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .add-item-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      padding: 14px 24px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .add-item-btn:hover {
+      background: var(--primary-dark);
+    }
+
+    /* Items List */
+    .items-section {
+      margin-bottom: 32px;
+    }
+
+    .items-section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .item-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: all 0.2s;
+    }
+
+    .item-card:hover {
+      border-color: var(--primary-light);
+      background: #fafafe;
+    }
+
+    .item-checkbox {
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .item-checkbox:hover {
+      border-color: var(--primary);
+    }
+
+    .item-checkbox.checked {
+      background: var(--success);
+      border-color: var(--success);
+      color: white;
+    }
+
+    .item-content {
+      flex: 1;
+    }
+
+    .item-text {
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .item-card.done .item-text {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .item-meta {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .item-actions {
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .item-card:hover .item-actions {
+      opacity: 1;
+    }
+
+    .item-action-btn {
+      background: none;
+      border: none;
+      padding: 8px;
+      cursor: pointer;
+      color: var(--text-muted);
+      border-radius: var(--radius-sm);
+    }
+
+    .item-action-btn:hover {
+      background: var(--bg-hover);
+      color: var(--danger);
+    }
+
+    /* ========== CELEBRATION MODAL ========== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 100;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      animation: modalIn 0.3s ease;
+    }
+
+    @keyframes modalIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .modal-celebration {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .modal-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .modal-subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    .modal-item {
+      background: var(--bg);
+      padding: 16px;
+      border-radius: var(--radius);
+      font-weight: 500;
+      margin-bottom: 24px;
+    }
+
+    .modal-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      padding: 14px 32px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    /* ========== INVITATIONS ========== */
+    .invitations-panel {
+      background: white;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .invitation-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .invitation-card:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .invitation-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+    }
+
+    .invitation-content {
+      flex: 1;
+    }
+
+    .invitation-text {
+      font-size: 15px;
+      margin-bottom: 2px;
+    }
+
+    .invitation-text strong {
+      font-weight: 600;
+    }
+
+    .invitation-meta {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .invitation-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .inv-btn {
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .inv-btn.accept {
+      background: var(--success);
+      color: white;
+      border: none;
+    }
+
+    .inv-btn.accept:hover {
+      background: #059669;
+    }
+
+    .inv-btn.decline {
+      background: white;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .inv-btn.decline:hover {
+      background: var(--bg-hover);
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 600px) {
+      .app-container {
+        padding: 16px;
+      }
+
+      .header-title {
+        font-size: 18px;
+      }
+
+      .bucket-card-title {
+        font-size: 16px;
+      }
+
+      .detail-title {
+        font-size: 24px;
+      }
+
+      .add-item-form {
+        flex-direction: column;
+      }
+
+      .invitation-card {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+      }
+
+      .invitation-actions {
+        margin-top: 12px;
+        width: 100%;
+      }
+
+      .inv-btn {
+        flex: 1;
+      }
+    }
+
+    /* ========== PAGE SECTIONS ========== */
+    .page-section {
+      padding: 60px 20px;
+      border-bottom: 3px dashed var(--border);
+    }
+
+    .page-section:last-child {
+      border-bottom: none;
+    }
+
+    .page-label {
+      background: var(--primary);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: inline-block;
+      margin-bottom: 24px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ==================== LOGIN PAGE ==================== -->
+<div class="page-section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;">
+  <div style="text-align: center; margin-bottom: 40px;">
+    <span class="page-label" style="background: rgba(255,255,255,0.2);">Login Page</span>
+  </div>
+
+  <div class="login-card" style="margin: 0 auto;">
+    <div class="login-logo">🎯</div>
+    <h1 class="login-title">Bucket List</h1>
+    <p class="login-subtitle">Track your dreams together.<br>Create, share, and achieve your goals.</p>
+
+    <button class="google-btn">
+      <svg viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      Continue with Google
+    </button>
+  </div>
+</div>
+
+<!-- ==================== DASHBOARD ==================== -->
+<div class="page-section">
+  <span class="page-label">Dashboard - My Bucket Lists</span>
+
+  <div class="app-container" style="padding: 0;">
+    <header class="header">
+      <div class="header-left">
+        <span class="header-logo">🎯</span>
+        <span class="header-title">Bucket List</span>
+      </div>
+      <div class="header-right">
+        <button class="notification-badge">
+          🔔
+          <span class="notification-dot"></span>
+        </button>
+        <div class="avatar">A</div>
+      </div>
+    </header>
+
+    <!-- Invitations -->
+    <div class="invitations-panel">
+      <div class="section-title" style="margin-bottom: 12px;">Pending Invitations</div>
+      <div class="invitation-card">
+        <div class="invitation-avatar">M</div>
+        <div class="invitation-content">
+          <div class="invitation-text"><strong>Maria</strong> invited you to <strong>Europe Trip 2025</strong></div>
+          <div class="invitation-meta">2 hours ago</div>
+        </div>
+        <div class="invitation-actions">
+          <button class="inv-btn accept">Accept</button>
+          <button class="inv-btn decline">Decline</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <span class="section-title">My Lists</span>
+      <button class="create-btn">
+        <span>+</span>
+        New List
+      </button>
+    </div>
+
+    <div class="bucket-grid">
+      <div class="bucket-card">
+        <div class="bucket-card-header">
+          <div>
+            <div class="bucket-card-title">Life Goals 2025</div>
+            <div class="bucket-card-desc">Personal achievements and milestones</div>
+          </div>
+          <span class="bucket-card-type">Individual</span>
+        </div>
+        <div class="bucket-card-footer">
+          <div class="bucket-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: 30%"></div>
+            </div>
+            <span class="progress-text">3/10</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bucket-card">
+        <div class="bucket-card-header">
+          <div>
+            <div class="bucket-card-title">Travel Adventures</div>
+            <div class="bucket-card-desc">Places we want to visit together</div>
+          </div>
+          <span class="bucket-card-type group">Group</span>
+        </div>
+        <div class="bucket-card-footer">
+          <div class="bucket-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: 60%"></div>
+            </div>
+            <span class="progress-text">6/10</span>
+          </div>
+          <div class="bucket-members">
+            <div class="avatar" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">M</div>
+            <div class="avatar">A</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bucket-card">
+        <div class="bucket-card-header">
+          <div>
+            <div class="bucket-card-title">Foodie Experiences</div>
+            <div class="bucket-card-desc">Restaurants and cuisines to try</div>
+          </div>
+          <span class="bucket-card-type group">Group</span>
+        </div>
+        <div class="bucket-card-footer">
+          <div class="bucket-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: 80%"></div>
+            </div>
+            <span class="progress-text">8/10</span>
+          </div>
+          <div class="bucket-members">
+            <div class="avatar" style="background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);">S</div>
+            <div class="avatar" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">M</div>
+            <div class="avatar">A</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== BUCKET LIST DETAIL ==================== -->
+<div class="page-section">
+  <span class="page-label">Bucket List Detail - Items View</span>
+
+  <div class="app-container" style="padding: 0;">
+    <div class="detail-header">
+      <a href="#" class="back-btn">← Back to lists</a>
+      <h1 class="detail-title">Travel Adventures</h1>
+      <div class="detail-meta">
+        <span class="detail-meta-item">📍 6 of 10 completed</span>
+        <span class="detail-meta-item">👥 Shared with Maria</span>
+      </div>
+    </div>
+
+    <form class="add-item-form">
+      <input type="text" class="add-item-input" placeholder="Add a new dream destination...">
+      <button type="submit" class="add-item-btn">Add</button>
+    </form>
+
+    <div class="items-section">
+      <div class="items-section-title">📌 To Do (4)</div>
+
+      <div class="item-card">
+        <div class="item-checkbox"></div>
+        <div class="item-content">
+          <div class="item-text">Visit the Northern Lights in Iceland</div>
+        </div>
+        <div class="item-actions">
+          <button class="item-action-btn">🗑️</button>
+        </div>
+      </div>
+
+      <div class="item-card">
+        <div class="item-checkbox"></div>
+        <div class="item-content">
+          <div class="item-text">Road trip through New Zealand</div>
+        </div>
+        <div class="item-actions">
+          <button class="item-action-btn">🗑️</button>
+        </div>
+      </div>
+
+      <div class="item-card">
+        <div class="item-checkbox"></div>
+        <div class="item-content">
+          <div class="item-text">Explore ancient temples in Kyoto</div>
+        </div>
+        <div class="item-actions">
+          <button class="item-action-btn">🗑️</button>
+        </div>
+      </div>
+
+      <div class="item-card">
+        <div class="item-checkbox"></div>
+        <div class="item-content">
+          <div class="item-text">Safari adventure in Kenya</div>
+        </div>
+        <div class="item-actions">
+          <button class="item-action-btn">🗑️</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="items-section">
+      <div class="items-section-title">✅ Completed (6)</div>
+
+      <div class="item-card done">
+        <div class="item-checkbox checked">✓</div>
+        <div class="item-content">
+          <div class="item-text">Watch sunrise at Angkor Wat</div>
+          <div class="item-meta">Completed Dec 15, 2024 by Maria</div>
+        </div>
+        <div class="item-actions">
+          <button class="item-action-btn">🗑️</button>
+        </div>
+      </div>
+
+      <div class="item-card done">
+        <div class="item-checkbox checked">✓</div>
+        <div class="item-content">
+          <div class="item-text">Hike the Inca Trail to Machu Picchu</div>
+          <div class="item-meta">Completed Nov 28, 2024 by Alex</div>
+        </div>
+        <div class="item-actions">
+          <button class="item-action-btn">🗑️</button>
+        </div>
+      </div>
+
+      <div class="item-card done">
+        <div class="item-checkbox checked">✓</div>
+        <div class="item-content">
+          <div class="item-text">Gondola ride in Venice</div>
+          <div class="item-meta">Completed Oct 10, 2024 by Maria</div>
+        </div>
+        <div class="item-actions">
+          <button class="item-action-btn">🗑️</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== CELEBRATION MODAL ==================== -->
+<div class="page-section" style="background: var(--bg);">
+  <span class="page-label">Celebration Modal (on item completion)</span>
+
+  <div class="modal-overlay" style="position: relative; background: rgba(0,0,0,0.3); border-radius: 16px; min-height: 500px;">
+    <div class="modal">
+      <div class="modal-celebration">🎉</div>
+      <h2 class="modal-title">Congratulations!</h2>
+      <p class="modal-subtitle">You've achieved another dream!</p>
+      <div class="modal-item">"Watch sunrise at Angkor Wat"</div>
+      <button class="modal-btn">Continue</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
