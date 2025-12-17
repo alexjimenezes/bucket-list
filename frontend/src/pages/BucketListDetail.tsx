@@ -391,6 +391,50 @@ function InviteModal({
   );
 }
 
+function DeleteConfirmModal({
+  isOpen,
+  itemText,
+  onClose,
+  onConfirm,
+  isLoading,
+}: {
+  isOpen: boolean;
+  itemText: string;
+  onClose: () => void;
+  onConfirm: () => void;
+  isLoading: boolean;
+}) {
+  return (
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <ModalHeader>
+        <div className="text-4xl mb-2">🗑️</div>
+        <ModalTitle>Delete Item</ModalTitle>
+        <ModalDescription>Are you sure you want to delete this item?</ModalDescription>
+      </ModalHeader>
+
+      <div className="bg-gray-50 rounded-[--radius] p-4 text-center font-medium text-gray-700 mb-4">
+        "{itemText}"
+      </div>
+
+      <ModalFooter>
+        <div className="flex gap-3 w-full">
+          <Button type="button" variant="outline" onClick={onClose} className="flex-1" disabled={isLoading}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={onConfirm}
+            className="flex-1 bg-danger-500 hover:bg-danger-600"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Deleting...' : 'Delete'}
+          </Button>
+        </div>
+      </ModalFooter>
+    </Modal>
+  );
+}
+
 export function BucketListDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -402,6 +446,7 @@ export function BucketListDetail() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<{ id: string; text: string } | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['bucket-list', id],
@@ -584,6 +629,12 @@ export function BucketListDetail() {
         )}
       </div>
 
+      {/* Memories Carousel */}
+      <MemoriesCarousel
+        items={bucketList.items || []}
+        onImageClick={setLightboxImage}
+      />
+
       {/* Add Item Form */}
       <form onSubmit={handleAddItem} className="flex gap-3 mb-8">
         <Input
@@ -596,12 +647,6 @@ export function BucketListDetail() {
           Add
         </Button>
       </form>
-
-      {/* Memories Carousel */}
-      <MemoriesCarousel
-        items={bucketList.items || []}
-        onImageClick={setLightboxImage}
-      />
 
       {/* Todo Items */}
       <div className="mb-8">
@@ -621,7 +666,7 @@ export function BucketListDetail() {
                 onToggle={() =>
                   toggleItemMutation.mutate({ itemId: item.id, done: true })
                 }
-                onDelete={() => deleteItemMutation.mutate(item.id)}
+                onDelete={() => setItemToDelete({ id: item.id, text: item.text })}
                 onImageClick={setLightboxImage}
               />
             ))}
@@ -648,7 +693,7 @@ export function BucketListDetail() {
                     onToggle={() =>
                       toggleItemMutation.mutate({ itemId: item.id, done: false })
                     }
-                    onDelete={() => deleteItemMutation.mutate(item.id)}
+                    onDelete={() => setItemToDelete({ id: item.id, text: item.text })}
                     onImageClick={setLightboxImage}
                     onAddPhoto={() => setCelebrationItem({ id: item.id, text: item.text })}
                   />
@@ -690,6 +735,21 @@ export function BucketListDetail() {
         onInvite={(email) => inviteMutation.mutate(email)}
         isLoading={inviteMutation.isPending}
       />
+
+      {/* Delete Confirm Modal */}
+      {itemToDelete && (
+        <DeleteConfirmModal
+          isOpen={!!itemToDelete}
+          itemText={itemToDelete.text}
+          onClose={() => setItemToDelete(null)}
+          onConfirm={() => {
+            deleteItemMutation.mutate(itemToDelete.id, {
+              onSuccess: () => setItemToDelete(null),
+            });
+          }}
+          isLoading={deleteItemMutation.isPending}
+        />
+      )}
 
       {/* Invite Error Toast */}
       {inviteError && (
