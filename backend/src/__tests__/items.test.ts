@@ -199,4 +199,88 @@ describe('Item Routes', () => {
       expect(response.body.item.text).toBe('Member item');
     });
   });
+
+  describe('completedAt editing', () => {
+    it('should update completedAt for a done item', async () => {
+      const user = await createTestUser();
+      const bucketList = await createTestBucketList(user.id, { name: 'Test CompletedAt Edit' });
+      const item = await createTestItem(bucketList.id, { text: 'Completed item', done: true });
+
+      const pastDate = new Date('2024-06-15T12:00:00Z');
+      const response = await request(app)
+        .put(`/bucket-lists/${bucketList.id}/items/${item.id}`)
+        .set(authHeader(user.token))
+        .send({ completedAt: pastDate.toISOString() });
+
+      expect(response.status).toBe(200);
+      expect(new Date(response.body.item.completedAt).toISOString()).toBe(pastDate.toISOString());
+    });
+
+    it('should return 400 when completedAt is in the future', async () => {
+      const user = await createTestUser();
+      const bucketList = await createTestBucketList(user.id, { name: 'Test Future CompletedAt' });
+      const item = await createTestItem(bucketList.id, { text: 'Completed item', done: true });
+
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 7); // 7 days in the future
+
+      const response = await request(app)
+        .put(`/bucket-lists/${bucketList.id}/items/${item.id}`)
+        .set(authHeader(user.token))
+        .send({ completedAt: futureDate.toISOString() });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Completed date cannot be in the future');
+    });
+
+    it('should return 400 when setting completedAt on uncompleted item', async () => {
+      const user = await createTestUser();
+      const bucketList = await createTestBucketList(user.id, { name: 'Test Uncompleted CompletedAt' });
+      const item = await createTestItem(bucketList.id, { text: 'Uncompleted item', done: false });
+
+      const pastDate = new Date('2024-06-15T12:00:00Z');
+      const response = await request(app)
+        .put(`/bucket-lists/${bucketList.id}/items/${item.id}`)
+        .set(authHeader(user.token))
+        .send({ completedAt: pastDate.toISOString() });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Cannot set completed date for uncompleted items');
+    });
+
+    it('should allow setting completedAt when also marking as done', async () => {
+      const user = await createTestUser();
+      const bucketList = await createTestBucketList(user.id, { name: 'Test CompletedAt With Done' });
+      const item = await createTestItem(bucketList.id, { text: 'To complete', done: false });
+
+      const pastDate = new Date('2024-06-15T12:00:00Z');
+      const response = await request(app)
+        .put(`/bucket-lists/${bucketList.id}/items/${item.id}`)
+        .set(authHeader(user.token))
+        .send({ done: true, completedAt: pastDate.toISOString() });
+
+      expect(response.status).toBe(200);
+      expect(response.body.item.done).toBe(true);
+      expect(new Date(response.body.item.completedAt).toISOString()).toBe(pastDate.toISOString());
+    });
+
+    it('should auto-set completedAt to now when marking done without explicit date', async () => {
+      const user = await createTestUser();
+      const bucketList = await createTestBucketList(user.id, { name: 'Test Auto CompletedAt' });
+      const item = await createTestItem(bucketList.id, { text: 'To complete', done: false });
+
+      const beforeRequest = new Date();
+      const response = await request(app)
+        .put(`/bucket-lists/${bucketList.id}/items/${item.id}`)
+        .set(authHeader(user.token))
+        .send({ done: true });
+      const afterRequest = new Date();
+
+      expect(response.status).toBe(200);
+      expect(response.body.item.done).toBe(true);
+      const completedAt = new Date(response.body.item.completedAt);
+      expect(completedAt.getTime()).toBeGreaterThanOrEqual(beforeRequest.getTime());
+      expect(completedAt.getTime()).toBeLessThanOrEqual(afterRequest.getTime());
+    });
+  });
 });

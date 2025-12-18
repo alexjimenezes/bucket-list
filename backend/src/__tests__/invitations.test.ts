@@ -385,4 +385,111 @@ describe('Invitation Routes', () => {
       expect(noPendingResponse.body.invitations).toHaveLength(0);
     });
   });
+
+  describe('Re-invite after member removal', () => {
+    it('should allow re-inviting a removed member', async () => {
+      const owner = await createTestUser();
+      const member = await createTestUser();
+      const bucketList = await createTestBucketList(owner.id, { name: 'Test Re-invite' });
+
+      // 1. Owner invites user
+      const inviteResponse = await request(app)
+        .post(`/bucket-lists/${bucketList.id}/invite`)
+        .set(authHeader(owner.token))
+        .send({ email: member.email });
+
+      expect(inviteResponse.status).toBe(201);
+      const invitationId = inviteResponse.body.invitation.id;
+
+      // 2. Member accepts invitation
+      const acceptResponse = await request(app)
+        .post(`/invitations/${invitationId}/accept`)
+        .set(authHeader(member.token));
+
+      expect(acceptResponse.status).toBe(200);
+
+      // 3. Owner removes member
+      const removeResponse = await request(app)
+        .delete(`/bucket-lists/${bucketList.id}/members/${member.id}`)
+        .set(authHeader(owner.token));
+
+      expect(removeResponse.status).toBe(200);
+
+      // 4. Member can no longer access bucket list
+      const accessResponse = await request(app)
+        .get(`/bucket-lists/${bucketList.id}`)
+        .set(authHeader(member.token));
+
+      expect(accessResponse.status).toBe(404);
+
+      // 5. Owner re-invites the same member
+      const reInviteResponse = await request(app)
+        .post(`/bucket-lists/${bucketList.id}/invite`)
+        .set(authHeader(owner.token))
+        .send({ email: member.email });
+
+      expect(reInviteResponse.status).toBe(201);
+      expect(reInviteResponse.body.invitation.status).toBe('pending');
+
+      // 6. Member sees new pending invitation
+      const pendingResponse = await request(app)
+        .get('/invitations/pending')
+        .set(authHeader(member.token));
+
+      expect(pendingResponse.status).toBe(200);
+      expect(pendingResponse.body.invitations).toHaveLength(1);
+
+      // 7. Member accepts and can access again
+      const reAcceptResponse = await request(app)
+        .post(`/invitations/${reInviteResponse.body.invitation.id}/accept`)
+        .set(authHeader(member.token));
+
+      expect(reAcceptResponse.status).toBe(200);
+
+      const finalAccessResponse = await request(app)
+        .get(`/bucket-lists/${bucketList.id}`)
+        .set(authHeader(member.token));
+
+      expect(finalAccessResponse.status).toBe(200);
+    });
+
+    it('should reactivate declined invitation when re-inviting', async () => {
+      const owner = await createTestUser();
+      const invitee = await createTestUser();
+      const bucketList = await createTestBucketList(owner.id, { name: 'Test Reactivate Declined' });
+
+      // 1. Owner invites user
+      const inviteResponse = await request(app)
+        .post(`/bucket-lists/${bucketList.id}/invite`)
+        .set(authHeader(owner.token))
+        .send({ email: invitee.email });
+
+      expect(inviteResponse.status).toBe(201);
+      const invitationId = inviteResponse.body.invitation.id;
+
+      // 2. Invitee declines
+      const declineResponse = await request(app)
+        .post(`/invitations/${invitationId}/decline`)
+        .set(authHeader(invitee.token));
+
+      expect(declineResponse.status).toBe(200);
+
+      // 3. Owner re-invites (should reactivate existing invitation)
+      const reInviteResponse = await request(app)
+        .post(`/bucket-lists/${bucketList.id}/invite`)
+        .set(authHeader(owner.token))
+        .send({ email: invitee.email });
+
+      expect(reInviteResponse.status).toBe(201);
+      expect(reInviteResponse.body.invitation.status).toBe('pending');
+
+      // 4. Invitee sees the reactivated invitation
+      const pendingResponse = await request(app)
+        .get('/invitations/pending')
+        .set(authHeader(invitee.token));
+
+      expect(pendingResponse.status).toBe(200);
+      expect(pendingResponse.body.invitations).toHaveLength(1);
+    });
+  });
 });

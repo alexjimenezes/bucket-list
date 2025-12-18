@@ -226,4 +226,80 @@ describe('Bucket List Routes', () => {
       expect(response.status).toBe(403);
     });
   });
+
+  describe('DELETE /bucket-lists/:id/members/:memberId', () => {
+    it('should remove a member from bucket list', async () => {
+      const owner = await createTestUser();
+      const member = await createTestUser();
+      const bucketList = await createTestBucketList(owner.id, { name: 'Test Remove Member' });
+
+      // Add member
+      const { prisma } = await import('../config/database');
+      await prisma.bucketListMember.create({
+        data: {
+          bucketListId: bucketList.id,
+          userId: member.id,
+          role: 'member',
+        },
+      });
+
+      const response = await request(app)
+        .delete(`/bucket-lists/${bucketList.id}/members/${member.id}`)
+        .set(authHeader(owner.token));
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe('Member removed successfully');
+
+      // Verify member is removed
+      const membership = await prisma.bucketListMember.findFirst({
+        where: { bucketListId: bucketList.id, userId: member.id },
+      });
+      expect(membership).toBeNull();
+    });
+
+    it('should return 403 for non-owner trying to remove member', async () => {
+      const owner = await createTestUser();
+      const member1 = await createTestUser();
+      const member2 = await createTestUser();
+      const bucketList = await createTestBucketList(owner.id, { name: 'Test Non-Owner Remove' });
+
+      const { prisma } = await import('../config/database');
+      await prisma.bucketListMember.createMany({
+        data: [
+          { bucketListId: bucketList.id, userId: member1.id, role: 'member' },
+          { bucketListId: bucketList.id, userId: member2.id, role: 'member' },
+        ],
+      });
+
+      // Member1 tries to remove Member2
+      const response = await request(app)
+        .delete(`/bucket-lists/${bucketList.id}/members/${member2.id}`)
+        .set(authHeader(member1.token));
+
+      expect(response.status).toBe(403);
+    });
+
+    it('should return 404 for non-existent member', async () => {
+      const owner = await createTestUser();
+      const bucketList = await createTestBucketList(owner.id, { name: 'Test Member Not Found' });
+
+      const response = await request(app)
+        .delete(`/bucket-lists/${bucketList.id}/members/non-existent-id`)
+        .set(authHeader(owner.token));
+
+      expect(response.status).toBe(404);
+    });
+
+    it('should return 400 when trying to remove owner', async () => {
+      const owner = await createTestUser();
+      const bucketList = await createTestBucketList(owner.id, { name: 'Test Remove Owner' });
+
+      const response = await request(app)
+        .delete(`/bucket-lists/${bucketList.id}/members/${owner.id}`)
+        .set(authHeader(owner.token));
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Cannot remove the owner from the bucket list');
+    });
+  });
 });
