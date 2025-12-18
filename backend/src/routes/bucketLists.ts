@@ -221,4 +221,42 @@ router.delete(
   })
 );
 
+// Remove a member from a bucket list
+router.delete(
+  '/:id/members/:memberId',
+  asyncHandler<AuthRequest>(async (req, res: Response) => {
+    const userId = req.user!.id;
+    const { id, memberId } = req.params;
+
+    // Check if user is owner
+    const ownership = await prisma.bucketListMember.findFirst({
+      where: { bucketListId: id, userId, role: 'owner' },
+    });
+
+    if (!ownership) {
+      throw new AppError('Only owners can remove members', 403);
+    }
+
+    // Find the member to remove
+    const memberToRemove = await prisma.bucketListMember.findFirst({
+      where: { bucketListId: id, userId: memberId },
+    });
+
+    if (!memberToRemove) {
+      throw new AppError('Member not found', 404);
+    }
+
+    // Cannot remove the owner
+    if (memberToRemove.role === 'owner') {
+      throw new AppError('Cannot remove the owner from the bucket list', 400);
+    }
+
+    await prisma.bucketListMember.delete({
+      where: { id: memberToRemove.id },
+    });
+
+    res.json({ message: 'Member removed successfully' });
+  })
+);
+
 export default router;

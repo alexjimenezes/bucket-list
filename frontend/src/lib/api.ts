@@ -74,6 +74,11 @@ export const bucketLists = {
       method: 'POST',
       body: JSON.stringify({ email }),
     }),
+
+  removeMember: (id: string, memberId: string) =>
+    fetchApi<MessageResponse>(`/bucket-lists/${id}/members/${memberId}`, {
+      method: 'DELETE',
+    }),
 };
 
 // Items

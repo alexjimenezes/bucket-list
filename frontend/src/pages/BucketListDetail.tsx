@@ -472,6 +472,128 @@ function DeleteConfirmModal({
   );
 }
 
+function EditBucketListModal({
+  isOpen,
+  onClose,
+  bucketList,
+  currentUserId,
+  onUpdate,
+  onRemoveMember,
+  isUpdating,
+  isRemovingMember,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  bucketList: {
+    id: string;
+    name: string;
+    description: string | null;
+    type: string;
+    members: Array<{
+      id: string;
+      userId: string;
+      role: string;
+      user: { id: string; name: string; avatarUrl: string | null };
+    }>;
+  };
+  currentUserId: string;
+  onUpdate: (data: { name: string; description?: string }) => void;
+  onRemoveMember: (memberId: string) => void;
+  isUpdating: boolean;
+  isRemovingMember: boolean;
+}) {
+  const [name, setName] = useState(bucketList.name);
+  const [description, setDescription] = useState(bucketList.description || '');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    onUpdate({ name: name.trim(), description: description.trim() || undefined });
+  };
+
+  const otherMembers = bucketList.members.filter(
+    (m) => m.userId !== currentUserId && m.role !== 'owner'
+  );
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <ModalHeader>
+        <div className="text-4xl mb-2">✏️</div>
+        <ModalTitle>Edit Bucket List</ModalTitle>
+        <ModalDescription>Update your bucket list details</ModalDescription>
+      </ModalHeader>
+
+      <form onSubmit={handleSubmit}>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Bucket list name"
+              autoFocus
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Description (optional)
+            </label>
+            <Input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="What's this list about?"
+            />
+          </div>
+
+          {otherMembers.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Members</label>
+              <div className="space-y-2">
+                {otherMembers.map((member) => (
+                  <div
+                    key={member.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-[--radius-lg]"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar name={member.user.name} src={member.user.avatarUrl} size="sm" />
+                      <span className="text-sm font-medium text-gray-700">{member.user.name}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onRemoveMember(member.userId)}
+                      disabled={isRemovingMember}
+                      className="text-xs text-gray-400 hover:text-danger-500 transition-colors px-2 py-1 hover:bg-danger-50 rounded-[--radius]"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <ModalFooter>
+          <div className="flex gap-3 w-full">
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="gradient"
+              className="flex-1"
+              disabled={!name.trim() || isUpdating}
+            >
+              {isUpdating ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        </ModalFooter>
+      </form>
+    </Modal>
+  );
+}
+
 export function BucketListDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -481,6 +603,7 @@ export function BucketListDetail() {
   const [newItemText, setNewItemText] = useState('');
   const [celebrationItem, setCelebrationItem] = useState<{ id: string; text: string } | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<{ id: string; text: string } | null>(null);
@@ -537,6 +660,23 @@ export function BucketListDetail() {
     mutationFn: () => bucketLists.delete(id!),
     onSuccess: () => {
       navigate('/');
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (data: { name: string; description?: string }) =>
+      bucketLists.update(id!, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bucket-list', id] });
+      queryClient.invalidateQueries({ queryKey: ['bucket-lists'] });
+      setShowEditModal(false);
+    },
+  });
+
+  const removeMemberMutation = useMutation({
+    mutationFn: (memberId: string) => bucketLists.removeMember(id!, memberId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bucket-list', id] });
     },
   });
 
@@ -629,6 +769,15 @@ export function BucketListDetail() {
           </div>
 
           <div className="flex items-center gap-2">
+            {isOwner && (
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="p-2 text-gray-400 hover:text-primary-500 hover:bg-primary-50 rounded-[--radius] transition-all"
+                title="Edit bucket list"
+              >
+                ✏️
+              </button>
+            )}
             {isOwner && bucketList.type === 'group' && (
               <Button variant="soft" size="sm" onClick={() => setShowInviteModal(true)}>
                 💌 Invite
@@ -777,6 +926,20 @@ export function BucketListDetail() {
         onInvite={(email) => inviteMutation.mutate(email)}
         isLoading={inviteMutation.isPending}
       />
+
+      {/* Edit Bucket List Modal */}
+      {showEditModal && (
+        <EditBucketListModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          bucketList={bucketList}
+          currentUserId={user?.id || ''}
+          onUpdate={(data) => updateMutation.mutate(data)}
+          onRemoveMember={(memberId) => removeMemberMutation.mutate(memberId)}
+          isUpdating={updateMutation.isPending}
+          isRemovingMember={removeMemberMutation.isPending}
+        />
+      )}
 
       {/* Delete Confirm Modal */}
       {itemToDelete && (
