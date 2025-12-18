@@ -5,3 +5,5 @@ export { Avatar } from './Avatar';
 export { Badge } from './Badge';
 export { Modal, ModalHeader, ModalTitle, ModalDescription, ModalFooter } from './Modal';
 export { ProgressBar } from './ProgressBar';
+export { ImageLightbox } from './ImageLightbox';
+export { ConfirmModal } from './ConfirmModal';
