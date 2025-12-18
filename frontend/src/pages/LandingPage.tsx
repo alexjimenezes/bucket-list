@@ -385,7 +385,8 @@ export function LandingPage() {
             <Button
               onClick={handleSignIn}
               size="lg"
-              className="bg-white text-primary-600 hover:bg-gray-50 shadow-soft-lg hover:shadow-soft-xl transition-all px-10 relative"
+              variant="outline"
+              className="bg-white text-primary-600 hover:text-primary-700 border-white hover:border-white hover:bg-gray-50 shadow-soft-lg hover:shadow-soft-xl transition-all px-10 relative"
             >
               Sign In with Google ✨
             </Button>
