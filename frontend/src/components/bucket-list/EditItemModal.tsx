@@ -30,6 +30,7 @@ export function EditItemModal({
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isDeletingImage, setIsDeletingImage] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showImageOverlay, setShowImageOverlay] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const today = new Date().toISOString().split('T')[0];
@@ -114,7 +115,7 @@ export function EditItemModal({
     <Modal isOpen={isOpen} onClose={handleClose}>
       <div className="flex flex-col items-center">
         {/* Instax-style frame */}
-        <div className="bg-white rounded-sm p-3 pb-14 relative mb-4 w-full max-w-[280px] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.15),0_8px_40px_-8px_rgba(0,0,0,0.1)] transform rotate-1 hover:rotate-0 transition-transform duration-300">
+        <div className={`bg-white rounded-sm p-3 pb-14 relative mb-4 w-full max-w-[280px] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.15),0_8px_40px_-8px_rgba(0,0,0,0.1)] transform hover:rotate-0 transition-transform duration-300 ${showImageOverlay ? 'rotate-0' : 'rotate-1'}`}>
           {/* Photo area */}
           <div className="aspect-square bg-gray-100 rounded-sm overflow-hidden relative">
             {preview || item.imageUrl ? (
@@ -123,11 +124,17 @@ export function EditItemModal({
                   src={preview || item.imageUrl!}
                   alt={item.text}
                   className="w-full h-full object-cover"
+                  onClick={() => item.done && setShowImageOverlay(!showImageOverlay)}
                 />
                 {/* Image overlay actions for completed items */}
                 {item.done && (
-                  <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
-                    <div className="flex gap-2">
+                  <div
+                    className={`absolute inset-0 transition-all flex items-center justify-center md:bg-black/0 md:opacity-0 md:hover:bg-black/40 md:hover:opacity-100 ${
+                      showImageOverlay ? 'bg-black/40 opacity-100' : 'bg-black/0 opacity-0 pointer-events-none md:pointer-events-auto'
+                    }`}
+                    onClick={() => setShowImageOverlay(false)}
+                  >
+                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}

@@ -18,7 +18,7 @@ export function MemoriesCarousel({ items, onImageClick }: MemoriesCarouselProps)
         Memories ({memoriesWithImages.length})
       </h2>
       <div className="overflow-x-auto pb-3 -mx-4 px-4 scrollbar-hide">
-        <div className="flex gap-6" style={{ width: 'max-content' }}>
+        <div className="flex gap-3 md:gap-6" style={{ width: 'max-content' }}>
           {memoriesWithImages.map((item, index) => (
             <button
               key={item.id}
