@@ -22,7 +22,15 @@ passport.use(
           where: { googleId: profile.id },
         });
 
-        if (!user) {
+        if (user) {
+          // Update avatar URL on each login (in case it changed)
+          user = await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              avatarUrl: profile.photos?.[0]?.value || user.avatarUrl,
+            },
+          });
+        } else {
           // Check if user exists with this email (invited but not registered)
           user = await prisma.user.findUnique({
             where: { email },

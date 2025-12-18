@@ -77,7 +77,7 @@ function ItemCard({
           </p>
           {item.done && item.completedAt && (
             <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
-              <span>✨</span> Completed {formatDate(item.completedAt)}
+              <span>✨</span> {formatDate(item.completedAt)}
             </p>
           )}
         </button>
@@ -1025,15 +1025,67 @@ export function BucketListDetail() {
 
       {/* Header */}
       <div className="mb-6 animate-fade-in-up">
+        {/* Mobile: Avatars (left) + Action buttons (right) */}
+        <div className="flex items-center justify-between mb-4 md:hidden">
+          {/* Avatars */}
+          {bucketList.members.length > 1 ? (
+            <div className="flex items-center gap-1">
+              {bucketList.members.map((member, idx) => (
+                <Avatar
+                  key={member.id}
+                  name={member.user.name}
+                  src={member.user.avatarUrl}
+                  size="sm"
+                  className="ring-2 ring-white hover:scale-110 transition-transform"
+                  style={{ animationDelay: `${idx * 0.1}s` }}
+                />
+              ))}
+            </div>
+          ) : (
+            <div />
+          )}
+
+          {/* Action buttons */}
+          {isOwner && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="p-2 text-gray-400 hover:text-primary-500 hover:bg-primary-50 rounded-[--radius] transition-all"
+                title="Edit bucket list"
+              >
+                ✏️
+              </button>
+              {bucketList.type === 'group' && (
+                <Button variant="soft" size="sm" onClick={() => setShowInviteModal(true)}>
+                  💌 Invite
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (confirm('Are you sure you want to delete this list?')) {
+                    deleteMutation.mutate();
+                  }
+                }}
+                className="text-danger-500 hover:bg-danger-50"
+              >
+                Delete
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Title row */}
         <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">{bucketList.name}</h1>
-            <div className="flex items-center gap-4 text-sm text-gray-500">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl font-bold text-gray-900 mb-3">{bucketList.name}</h1>
+            <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-4 text-sm text-gray-500">
               <span className="flex items-center gap-1">
                 📍 {doneItems.length} of {(todoItems.length + doneItems.length)} completed
               </span>
               {bucketList.members.length > 1 && (
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-1 text-right sm:text-left">
                   👥 Shared with{' '}
                   {(() => {
                     const others = bucketList.members.filter((m) => m.userId !== user?.id);
@@ -1049,7 +1101,8 @@ export function BucketListDetail() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* Desktop: Action buttons next to title */}
+          <div className="hidden md:flex items-center gap-2">
             {isOwner && (
               <button
                 onClick={() => setShowEditModal(true)}
@@ -1081,9 +1134,9 @@ export function BucketListDetail() {
           </div>
         </div>
 
-        {/* Members */}
+        {/* Desktop: Members */}
         {bucketList.members.length > 1 && (
-          <div className="flex items-center gap-2 mt-4">
+          <div className="hidden md:flex items-center gap-2 mt-4">
             {bucketList.members.map((member, idx) => (
               <Avatar
                 key={member.id}
