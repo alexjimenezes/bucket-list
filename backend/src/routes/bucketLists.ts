@@ -4,7 +4,7 @@ import { prisma } from '../config/database';
 import { AuthRequest, authMiddleware } from '../middleware/auth';
 import { asyncHandler } from '../middleware/asyncHandler';
 import { AppError } from '../middleware/errorHandler';
-import { getSignedImageUrl, isR2Configured } from '../config/r2';
+import { getSignedImageUrl, isR2Configured, deleteFromR2 } from '../config/r2';
 
 const router = Router();
 
@@ -211,6 +211,23 @@ router.delete(
 
     if (!membership) {
       throw new AppError('Only owners can delete the bucket list', 403);
+    }
+
+    // Delete all images from R2 before deleting the bucket list
+    if (isR2Configured()) {
+      const itemsWithImages = await prisma.bucketListItem.findMany({
+        where: { bucketListId: id, imageKey: { not: null } },
+        select: { imageKey: true },
+      });
+
+      // Delete images in parallel, but don't fail if some deletions fail
+      await Promise.allSettled(
+        itemsWithImages.map((item) =>
+          deleteFromR2(item.imageKey!).catch((error) => {
+            console.error(`Failed to delete image ${item.imageKey} from R2:`, error);
+          })
+        )
+      );
     }
 
     await prisma.bucketList.delete({

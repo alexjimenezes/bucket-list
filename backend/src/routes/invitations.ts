@@ -48,13 +48,32 @@ router.post(
       throw new AppError('This user is already a member of this bucket list', 400);
     }
 
-    // Check if invitation already exists
+    // Check if invitation already exists (any status)
     const existingInvitation = await prisma.invitation.findFirst({
-      where: { bucketListId, email: data.email, status: 'pending' },
+      where: { bucketListId, email: data.email },
     });
 
     if (existingInvitation) {
-      throw new AppError('An invitation has already been sent to this email', 400);
+      if (existingInvitation.status === 'pending') {
+        throw new AppError('An invitation has already been sent to this email', 400);
+      }
+
+      // Reactivate existing invitation (was accepted/declined but member was removed)
+      const invitation = await prisma.invitation.update({
+        where: { id: existingInvitation.id },
+        data: {
+          status: 'pending',
+          invitedById: userId,
+        },
+        include: {
+          bucketList: {
+            select: { name: true },
+          },
+        },
+      });
+
+      res.status(201).json({ invitation });
+      return;
     }
 
     // Find if the invited user already exists
@@ -62,7 +81,7 @@ router.post(
       where: { email: data.email },
     });
 
-    // Create invitation
+    // Create new invitation
     const invitation = await prisma.invitation.create({
       data: {
         bucketListId,
