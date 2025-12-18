@@ -225,7 +225,7 @@ export function LandingPage() {
             Simple, beautiful, and designed to help you focus on what matters most.
           </p>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <FeatureCard
               icon="📝"
               title="Create Lists"
@@ -239,10 +239,16 @@ export function LandingPage() {
               index={1}
             />
             <FeatureCard
+              icon="📸"
+              title="Capture Memories"
+              description="Add photos when you complete a goal. Build a beautiful gallery of your achievements."
+              index={2}
+            />
+            <FeatureCard
               icon="🎉"
               title="Celebrate Wins"
               description="Every completed goal deserves a celebration. We'll cheer you on with every checkmark."
-              index={2}
+              index={3}
             />
           </div>
         </div>
@@ -306,8 +312,112 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* Memories Carousel Section */}
+      <section className="py-20 px-4 bg-white/50 overflow-hidden">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-2xl md:text-3xl font-bold text-center text-gray-900 mb-4">
+            Your memories, beautifully preserved 📸
+          </h2>
+          <p className="text-gray-600 text-center mb-12 max-w-2xl mx-auto">
+            Every completed goal becomes a memory. Add photos to capture the moment
+            and browse them in your personal gallery.
+          </p>
+
+          {/* Mock Polaroid Carousel */}
+          <div className="relative">
+            {/* Gradient fade edges */}
+            <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-white/50 to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-white/50 to-transparent z-10 pointer-events-none" />
+
+            <div className="flex gap-4 md:gap-6 justify-center items-end pb-4">
+              {/* Polaroid 1 */}
+              <div
+                className="relative flex-shrink-0 bg-white rounded-sm shadow-soft p-2 pb-10 transform -rotate-3 hover:rotate-0 transition-transform duration-300 animate-fade-in-up"
+                style={{ animationDelay: '0s' }}
+              >
+                <div className="w-28 h-28 md:w-36 md:h-36 bg-gradient-to-br from-pastel-blue to-pastel-purple rounded-sm flex items-center justify-center">
+                  <span className="text-4xl md:text-5xl">🏔️</span>
+                </div>
+                <div className="absolute bottom-2 left-2 right-2 text-center">
+                  <p className="text-[10px] text-gray-500 font-medium truncate">Hiked Mt. Fuji</p>
+                  <p className="text-[9px] text-gray-400">Jul 15, 2024</p>
+                </div>
+              </div>
+
+              {/* Polaroid 2 */}
+              <div
+                className="relative flex-shrink-0 bg-white rounded-sm shadow-soft-lg p-2 pb-10 transform rotate-1 hover:rotate-0 transition-transform duration-300 animate-fade-in-up scale-105"
+                style={{ animationDelay: '0.1s' }}
+              >
+                <div className="w-32 h-32 md:w-40 md:h-40 bg-gradient-to-br from-pastel-pink to-pastel-purple rounded-sm flex items-center justify-center">
+                  <span className="text-5xl md:text-6xl">🎸</span>
+                </div>
+                <div className="absolute bottom-2 left-2 right-2 text-center">
+                  <p className="text-[10px] text-gray-500 font-medium truncate">Learned guitar</p>
+                  <p className="text-[9px] text-gray-400">Aug 3, 2024</p>
+                </div>
+              </div>
+
+              {/* Polaroid 3 */}
+              <div
+                className="relative flex-shrink-0 bg-white rounded-sm shadow-soft p-2 pb-10 transform rotate-2 hover:rotate-0 transition-transform duration-300 animate-fade-in-up"
+                style={{ animationDelay: '0.2s' }}
+              >
+                <div className="w-28 h-28 md:w-36 md:h-36 bg-gradient-to-br from-pastel-mint to-pastel-blue rounded-sm flex items-center justify-center">
+                  <span className="text-4xl md:text-5xl">🌊</span>
+                </div>
+                <div className="absolute bottom-2 left-2 right-2 text-center">
+                  <p className="text-[10px] text-gray-500 font-medium truncate">Surfed in Hawaii</p>
+                  <p className="text-[9px] text-gray-400">Sep 21, 2024</p>
+                </div>
+              </div>
+
+              {/* Polaroid 4 - hidden on small screens */}
+              <div
+                className="relative hidden md:block flex-shrink-0 bg-white rounded-sm shadow-soft p-2 pb-10 transform -rotate-2 hover:rotate-0 transition-transform duration-300 animate-fade-in-up"
+                style={{ animationDelay: '0.3s' }}
+              >
+                <div className="w-36 h-36 bg-gradient-to-br from-yellow-100 to-pastel-pink rounded-sm flex items-center justify-center">
+                  <span className="text-5xl">🎂</span>
+                </div>
+                <div className="absolute bottom-2 left-2 right-2 text-center">
+                  <p className="text-[10px] text-gray-500 font-medium truncate">Made birthday cake</p>
+                  <p className="text-[9px] text-gray-400">Oct 5, 2024</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* How it works mini-section */}
+          <div className="mt-12 max-w-2xl mx-auto">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 text-center">
+              <div className="flex items-center gap-3 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+                <div className="w-10 h-10 rounded-full bg-success-100 flex items-center justify-center">
+                  <span className="text-success-600">✓</span>
+                </div>
+                <span className="text-sm text-gray-600">Complete a goal</span>
+              </div>
+              <span className="hidden md:block text-gray-300">→</span>
+              <div className="flex items-center gap-3 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+                <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
+                  <span>📷</span>
+                </div>
+                <span className="text-sm text-gray-600">Add a photo</span>
+              </div>
+              <span className="hidden md:block text-gray-300">→</span>
+              <div className="flex items-center gap-3 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+                <div className="w-10 h-10 rounded-full bg-pastel-purple flex items-center justify-center">
+                  <span>🖼️</span>
+                </div>
+                <span className="text-sm text-gray-600">Memories gallery</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* How It Works Section */}
-      <section className="py-20 px-4 bg-white/50">
+      <section className="py-20 px-4">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-bold text-center text-gray-900 mb-12">
             Simple as 1, 2, 3 ✨
@@ -343,7 +453,7 @@ export function LandingPage() {
             Join thousands of dreamers 🌟
           </h2>
 
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
             <StatCard icon="🎯" value="1,234" label="Lists Created" index={0} />
             <StatCard icon="✅" value="5,678" label="Dreams Achieved" index={1} />
             <StatCard icon="👥" value="890" label="Shared Adventures" index={2} />
