@@ -25,6 +25,7 @@ const createItemSchema = z.object({
 const updateItemSchema = z.object({
   text: z.string().min(1).max(500).optional(),
   done: z.boolean().optional(),
+  completedAt: z.string().datetime().optional(),
 });
 
 // Helper to check bucket list access
@@ -91,12 +92,37 @@ router.put(
       updateData.text = data.text;
     }
 
+    // Handle completedAt editing (only for completed items)
+    if (data.completedAt !== undefined) {
+      const newCompletedAt = new Date(data.completedAt);
+
+      // Validate: cannot be in the future
+      if (newCompletedAt > new Date()) {
+        throw new AppError('Completed date cannot be in the future', 400);
+      }
+
+      // Can only set completedAt if item is/will be completed
+      const willBeCompleted = data.done !== undefined ? data.done : existingItem.done;
+      if (!willBeCompleted) {
+        throw new AppError('Cannot set completed date for uncompleted items', 400);
+      }
+
+      updateData.completedAt = newCompletedAt;
+    }
+
     if (data.done !== undefined) {
       updateData.done = data.done;
       if (data.done) {
-        updateData.completedAt = new Date();
-        updateData.completedById = userId;
+        // Only set completedAt if not explicitly provided
+        if (data.completedAt === undefined) {
+          updateData.completedAt = new Date();
+        }
+        // Only set completedById if not already set
+        if (!existingItem.completedById) {
+          updateData.completedById = userId;
+        }
       } else {
+        // When uncompleting, clear completion metadata but keep image
         updateData.completedAt = null;
         updateData.completedById = null;
       }

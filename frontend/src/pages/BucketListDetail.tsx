@@ -24,6 +24,7 @@ function ItemCard({
   onDelete,
   onImageClick,
   onAddPhoto,
+  onEdit,
   index = 0,
 }: {
   item: BucketListItem;
@@ -31,8 +32,11 @@ function ItemCard({
   onDelete: () => void;
   onImageClick?: (imageUrl: string) => void;
   onAddPhoto?: () => void;
+  onEdit: () => void;
   index?: number;
 }) {
+  const hasImage = !!item.imageUrl;
+
   return (
     <div
       className={`bg-white border border-gray-100 rounded-[--radius-lg] p-4 transition-all duration-300 shadow-soft-sm hover:shadow-soft hover:border-primary-200 animate-fade-in-up ${
@@ -42,7 +46,10 @@ function ItemCard({
     >
       <div className="flex items-center gap-4">
         <button
-          onClick={onToggle}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle();
+          }}
           className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all duration-300 flex-shrink-0 ${
             item.done
               ? 'bg-gradient-to-r from-success-400 to-success-500 border-success-500 text-white shadow-glow-success'
@@ -56,7 +63,11 @@ function ItemCard({
           )}
         </button>
 
-        <div className="flex-1 min-w-0">
+        {/* Clickable text area to edit */}
+        <button
+          onClick={onEdit}
+          className="flex-1 min-w-0 text-left hover:bg-gray-50 -my-2 -ml-2 py-2 pl-2 pr-4 rounded-[--radius] transition-colors"
+        >
           <p
             className={`font-medium transition-all duration-300 ${
               item.done ? 'line-through text-gray-400' : 'text-gray-900'
@@ -69,34 +80,41 @@ function ItemCard({
               <span>✨</span> Completed {formatDate(item.completedAt)}
             </p>
           )}
-        </div>
+        </button>
 
         {/* Action buttons */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Photo button for completed items */}
-          {item.done && (
-            item.imageUrl ? (
-              <button
-                onClick={() => onImageClick?.(item.imageUrl!)}
-                className="p-2.5 text-purple-500 bg-purple-50 hover:bg-purple-100 rounded-[--radius] transition-all hover:scale-110"
-                title="View memory"
-              >
-                ✨
-              </button>
-            ) : (
-              <button
-                onClick={onAddPhoto}
-                className="p-2.5 text-gray-400 bg-gray-50 hover:bg-primary-50 hover:text-primary-500 rounded-[--radius] transition-all hover:scale-110"
-                title="Add memory photo"
-              >
-                📷
-              </button>
-            )
-          )}
+          {/* Photo button - show sparkle for items with images (completed or uncompleted) */}
+          {hasImage ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onImageClick?.(item.imageUrl!);
+              }}
+              className="p-2.5 text-purple-500 bg-purple-50 hover:bg-purple-100 rounded-[--radius] transition-all hover:scale-110"
+              title="View memory"
+            >
+              ✨
+            </button>
+          ) : item.done ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddPhoto?.();
+              }}
+              className="p-2.5 text-gray-400 bg-gray-50 hover:bg-primary-50 hover:text-primary-500 rounded-[--radius] transition-all hover:scale-110"
+              title="Add memory photo"
+            >
+              📷
+            </button>
+          ) : null}
 
           {/* Delete button */}
           <button
-            onClick={onDelete}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
             className="p-2.5 text-gray-400 bg-gray-50 hover:text-danger-500 hover:bg-danger-50 rounded-[--radius] transition-all hover:scale-110"
             title="Delete item"
           >
@@ -336,7 +354,8 @@ function MemoriesCarousel({
   items: BucketListItem[];
   onImageClick: (imageUrl: string) => void;
 }) {
-  const memoriesWithImages = items.filter((item) => item.imageUrl);
+  // Only show completed items with images
+  const memoriesWithImages = items.filter((item) => item.done && item.imageUrl);
 
   if (memoriesWithImages.length === 0) return null;
 
@@ -347,26 +366,39 @@ function MemoriesCarousel({
         Memories ({memoriesWithImages.length})
       </h2>
       <div className="overflow-x-auto pb-3 -mx-4 px-4 scrollbar-hide">
-        <div className="flex gap-4" style={{ width: 'max-content' }}>
+        <div className="flex gap-6" style={{ width: 'max-content' }}>
           {memoriesWithImages.map((item, index) => (
             <button
               key={item.id}
               onClick={() => onImageClick(item.imageUrl!)}
-              className="flex-shrink-0 rounded-[--radius-lg] overflow-hidden border-2 border-transparent hover:border-primary-400 transition-all duration-300 group relative hover:scale-105 hover:shadow-soft-lg animate-fade-in-up"
+              className="flex-shrink-0 transition-all duration-300 hover:scale-105 animate-fade-in-up group"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <img
-                src={item.imageUrl!}
-                alt={item.text}
-                className="w-36 h-28 object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                <span className="text-white text-xs font-medium truncate w-full">
-                  {item.text}
-                </span>
-              </div>
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <span className="text-lg animate-sparkle">✨</span>
+              {/* Instax-style frame */}
+              <div className="bg-white rounded-sm shadow-soft p-2 pb-10 relative hover:shadow-soft-lg transition-shadow">
+                {/* Photo area */}
+                <div className="w-32 h-32 bg-gray-100 rounded-sm overflow-hidden relative">
+                  <img
+                    src={item.imageUrl!}
+                    alt={item.text}
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                    <span className="text-2xl opacity-0 group-hover:opacity-100 transition-opacity">✨</span>
+                  </div>
+                </div>
+                {/* Instax bottom caption */}
+                <div className="absolute bottom-2 left-2 right-2 text-center">
+                  <p className="text-[10px] text-gray-500 font-medium truncate px-1">
+                    {item.text}
+                  </p>
+                  {item.completedAt && (
+                    <p className="text-[9px] text-gray-400 mt-0.5">
+                      {new Date(item.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </p>
+                  )}
+                </div>
               </div>
             </button>
           ))}
@@ -594,6 +626,244 @@ function EditBucketListModal({
   );
 }
 
+function EditItemModal({
+  isOpen,
+  onClose,
+  item,
+  onUpdate,
+  onImageUpload,
+  onImageDelete,
+  isUpdating,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  item: BucketListItem;
+  onUpdate: (data: { text?: string; completedAt?: string }) => void;
+  onImageUpload: (file: File) => Promise<void>;
+  onImageDelete: () => Promise<void>;
+  isUpdating: boolean;
+}) {
+  const [text, setText] = useState(item.text);
+  const [completedAt, setCompletedAt] = useState(
+    item.completedAt ? new Date(item.completedAt).toISOString().split('T')[0] : ''
+  );
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isDeletingImage, setIsDeletingImage] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setError('Please select a JPEG, PNG, or WebP image');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image must be less than 5MB');
+      return;
+    }
+
+    setError(null);
+    setSelectedFile(file);
+
+    const reader = new FileReader();
+    reader.onload = (e) => setPreview(e.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = async () => {
+    setError(null);
+
+    // Upload new image if selected
+    if (selectedFile) {
+      setIsUploadingImage(true);
+      try {
+        await onImageUpload(selectedFile);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to upload image');
+        setIsUploadingImage(false);
+        return;
+      }
+      setIsUploadingImage(false);
+    }
+
+    // Update text and/or completedAt
+    const updates: { text?: string; completedAt?: string } = {};
+    if (text.trim() !== item.text) {
+      updates.text = text.trim();
+    }
+    if (item.done && completedAt) {
+      const newCompletedAt = new Date(completedAt).toISOString();
+      if (newCompletedAt !== item.completedAt) {
+        updates.completedAt = newCompletedAt;
+      }
+    }
+
+    if (Object.keys(updates).length > 0 || selectedFile) {
+      onUpdate(updates);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleDeleteImage = async () => {
+    setIsDeletingImage(true);
+    try {
+      await onImageDelete();
+      setPreview(null);
+      setSelectedFile(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete image');
+    }
+    setIsDeletingImage(false);
+  };
+
+  const handleClose = () => {
+    setSelectedFile(null);
+    setPreview(null);
+    setError(null);
+    onClose();
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={handleClose}>
+      <div className="flex flex-col items-center">
+        {/* Instax-style frame */}
+        <div className="bg-white rounded-sm p-3 pb-14 relative mb-4 w-full max-w-[280px] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.15),0_8px_40px_-8px_rgba(0,0,0,0.1)] transform rotate-1 hover:rotate-0 transition-transform duration-300">
+          {/* Photo area */}
+          <div className="aspect-square bg-gray-100 rounded-sm overflow-hidden relative">
+            {preview || item.imageUrl ? (
+              <>
+                <img
+                  src={preview || item.imageUrl!}
+                  alt={item.text}
+                  className="w-full h-full object-cover"
+                />
+                {/* Image overlay actions for completed items */}
+                {item.done && (
+                  <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="p-2 bg-white/90 rounded-full text-gray-700 hover:bg-white transition-colors"
+                        title="Change image"
+                      >
+                        📷
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDeleteImage}
+                        disabled={isDeletingImage}
+                        className="p-2 bg-white/90 rounded-full text-danger-500 hover:bg-white transition-colors"
+                        title="Remove image"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                {item.done ? (
+                  <>
+                    <span className="text-4xl mb-2">📷</span>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-sm text-primary-500 hover:text-primary-600 transition-colors"
+                    >
+                      Add a memory
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-4xl mb-2">🎯</span>
+                    <span className="text-sm">Complete to add photo</span>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Instax bottom caption area */}
+          <div className="absolute bottom-3 left-3 right-3 text-center">
+            <p className="text-xs text-gray-400 font-medium truncate">
+              {item.done && item.completedAt
+                ? `✨ ${new Date(completedAt || item.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                : '🎯 Dream in progress'}
+            </p>
+          </div>
+        </div>
+
+        {/* Hidden file input */}
+        {item.done && (
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+        )}
+
+        {/* Edit form */}
+        <div className="w-full space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Dream</label>
+            <Input
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="What's your dream?"
+            />
+          </div>
+
+          {item.done && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Completed on</label>
+              <Input
+                type="date"
+                value={completedAt}
+                onChange={(e) => setCompletedAt(e.target.value)}
+                max={today}
+              />
+            </div>
+          )}
+
+          {error && (
+            <p className="text-sm text-danger-500 text-center">{error}</p>
+          )}
+        </div>
+
+        <ModalFooter>
+          <div className="flex gap-3 w-full">
+            <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="gradient"
+              onClick={handleSave}
+              className="flex-1"
+              disabled={!text.trim() || isUpdating || isUploadingImage}
+            >
+              {isUpdating || isUploadingImage ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </ModalFooter>
+      </div>
+    </Modal>
+  );
+}
+
 export function BucketListDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -607,6 +877,7 @@ export function BucketListDetail() {
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<{ id: string; text: string } | null>(null);
+  const [itemToEdit, setItemToEdit] = useState<BucketListItem | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['bucket-list', id],
@@ -677,6 +948,16 @@ export function BucketListDetail() {
     mutationFn: (memberId: string) => bucketLists.removeMember(id!, memberId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bucket-list', id] });
+    },
+  });
+
+  const editItemMutation = useMutation({
+    mutationFn: ({ itemId, data }: { itemId: string; data: { text?: string; completedAt?: string } }) =>
+      items.update(id!, itemId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bucket-list', id] });
+      queryClient.invalidateQueries({ queryKey: ['bucket-lists'] });
+      setItemToEdit(null);
     },
   });
 
@@ -858,6 +1139,7 @@ export function BucketListDetail() {
                 }
                 onDelete={() => setItemToDelete({ id: item.id, text: item.text })}
                 onImageClick={setLightboxImage}
+                onEdit={() => setItemToEdit(item)}
               />
             ))}
           </div>
@@ -887,6 +1169,7 @@ export function BucketListDetail() {
                     onDelete={() => setItemToDelete({ id: item.id, text: item.text })}
                     onImageClick={setLightboxImage}
                     onAddPhoto={() => setCelebrationItem({ id: item.id, text: item.text })}
+                    onEdit={() => setItemToEdit(item)}
                   />
                 ))}
               </div>
@@ -953,6 +1236,28 @@ export function BucketListDetail() {
             });
           }}
           isLoading={deleteItemMutation.isPending}
+        />
+      )}
+
+      {/* Edit Item Modal */}
+      {itemToEdit && (
+        <EditItemModal
+          key={itemToEdit.id}
+          isOpen={!!itemToEdit}
+          onClose={() => setItemToEdit(null)}
+          item={itemToEdit}
+          onUpdate={(data) => {
+            editItemMutation.mutate({ itemId: itemToEdit.id, data });
+          }}
+          onImageUpload={async (file) => {
+            await items.uploadImage(id!, itemToEdit.id, file);
+            queryClient.invalidateQueries({ queryKey: ['bucket-list', id] });
+          }}
+          onImageDelete={async () => {
+            await items.deleteImage(id!, itemToEdit.id);
+            queryClient.invalidateQueries({ queryKey: ['bucket-list', id] });
+          }}
+          isUpdating={editItemMutation.isPending}
         />
       )}
 

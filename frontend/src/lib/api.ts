@@ -89,7 +89,7 @@ export const items = {
       body: JSON.stringify({ text }),
     }),
 
-  update: (bucketListId: string, itemId: string, data: { text?: string; done?: boolean }) =>
+  update: (bucketListId: string, itemId: string, data: { text?: string; done?: boolean; completedAt?: string }) =>
     fetchApi<ItemResponse>(`/bucket-lists/${bucketListId}/items/${itemId}`, {
       method: 'PUT',
       body: JSON.stringify(data),
