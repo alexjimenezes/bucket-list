@@ -6,8 +6,14 @@ interface MemoriesCarouselProps {
 }
 
 export function MemoriesCarousel({ items, onImageClick }: MemoriesCarouselProps) {
-  // Only show completed items with images
-  const memoriesWithImages = items.filter((item) => item.done && item.imageUrl);
+  // Only show completed items with images, sorted by completedAt (most recent first)
+  const memoriesWithImages = items
+    .filter((item) => item.done && item.imageUrl)
+    .sort((a, b) => {
+      const dateA = a.completedAt ? new Date(a.completedAt).getTime() : 0;
+      const dateB = b.completedAt ? new Date(b.completedAt).getTime() : 0;
+      return dateB - dateA; // Most recent first (left to right)
+    });
 
   if (memoriesWithImages.length === 0) return null;
 
