@@ -10,6 +10,14 @@ import type {
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
+const TOKEN_KEY = 'auth_token';
+
+export const tokenStorage = {
+  get: (): string | null => localStorage.getItem(TOKEN_KEY),
+  set: (token: string): void => localStorage.setItem(TOKEN_KEY, token),
+  clear: (): void => localStorage.removeItem(TOKEN_KEY),
+};
+
 class ApiError extends Error {
   status: number;
 
@@ -24,13 +32,17 @@ async function fetchApi<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
+  const token = tokenStorage.get();
+
   const response = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
-    credentials: 'include',
+    // credentials: 'include' is no longer needed — we use Authorization header.
+    // Keeping it doesn't hurt but the token is sent explicitly.
   });
 
   if (!response.ok) {
@@ -44,7 +56,11 @@ async function fetchApi<T>(
 // Auth
 export const auth = {
   me: () => fetchApi<AuthMeResponse>('/auth/me'),
-  logout: () => fetchApi<MessageResponse>('/auth/logout', { method: 'POST' }),
+  logout: async (): Promise<MessageResponse> => {
+    const result = await fetchApi<MessageResponse>('/auth/logout', { method: 'POST' });
+    tokenStorage.clear();
+    return result;
+  },
   getGoogleUrl: () => `${API_BASE}/auth/google`,
 };
 
@@ -105,10 +121,14 @@ export const items = {
     const formData = new FormData();
     formData.append('image', file);
 
+    const token = tokenStorage.get();
+
     const response = await fetch(`${API_BASE}/bucket-lists/${bucketListId}/items/${itemId}/image`, {
       method: 'POST',
       body: formData,
-      credentials: 'include',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       // Don't set Content-Type header - browser will set it with boundary for FormData
     });
 

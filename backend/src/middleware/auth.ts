@@ -30,7 +30,12 @@ export const authMiddleware: RequestHandler = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const token = req.cookies?.token || req.headers.authorization?.replace('Bearer ', '');
+    // Accept token from Authorization header (preferred) or cookie (legacy fallback).
+    // We moved away from SameSite=None cookies because Safari (ITP) and Firefox (strict ETP)
+    // silently drop them during cross-origin redirects, breaking the post-OAuth /me call.
+    const token =
+      req.headers.authorization?.replace('Bearer ', '') ||
+      req.cookies?.token;
 
     if (!token) {
       res.status(401).json({ error: 'Authentication required' });

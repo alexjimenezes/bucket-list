@@ -12,6 +12,7 @@ const app = express();
 app.use(cors({
   origin: env.frontendUrl,
   credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json());
 app.use(cookieParser());

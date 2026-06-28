@@ -25,27 +25,17 @@ router.get(
     const user = req.user as { id: string };
     const token = generateToken(user.id);
 
-    // Set HTTP-only cookie
-    // Use sameSite: 'none' for cross-domain auth (backend and frontend on different domains)
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'none',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
-
-    // Redirect to frontend
-    res.redirect(`${env.frontendUrl}/auth/callback`);
+    // Pass the token as a URL param to avoid cross-site cookie blocking.
+    // Safari (ITP), Firefox (strict ETP), and iOS browsers silently drop
+    // SameSite=None cookies set during cross-origin redirects, causing the
+    // subsequent /auth/me call to fail and the user to land on the landing page.
+    // The frontend reads the token from the URL and stores it in localStorage.
+    res.redirect(`${env.frontendUrl}/auth/callback?token=${token}`);
   }
 );
 
-// Logout
+// Logout (token is stored client-side in localStorage; frontend clears it)
 router.post('/logout', (_req: Request, res: Response) => {
-  res.clearCookie('token', {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'none',
-  });
   res.json({ message: 'Logged out successfully' });
 });
 
